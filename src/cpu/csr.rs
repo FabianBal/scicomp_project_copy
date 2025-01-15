@@ -1,8 +1,4 @@
-use std::path::Path;
-use std::io::{BufRead, BufReader};
-use std::fs::File;
-
-use super::COO;
+use super::{Dense, COO};
 
 
 // CSR format from "Two Fast Algorithms for Sparse Matrices: Multiplication and Permuted Transposition", Rice, Gustavson
@@ -83,11 +79,12 @@ impl CSR {
     // C = A*B
     // I_i(A) is the set of column indices of all non-zero entries of the i-th row of A
     // Returns dense matrix
-    pub fn product(&self, other: &CSR) -> Vec<Vec<f64>> {
+    pub fn product(&self, other: &CSR) -> Dense {
         // let data = vec![];
         let m = self.shape.0;
         let n = other.shape.1;
-        let mut mat = vec![vec![0.;n];m];
+        // let mut mat = vec![vec![0.;n];m];
+        let mut mat = Dense::new_zeros((m,n));
 
         for i in 0..m {
             // iterate over all non-zero cols of A_{i*}
@@ -101,20 +98,32 @@ impl CSR {
                     // C_{i*} = \sum_{k \in I_i (A)} a_{ik} b_{i*}
                     // a_{ik} = self.values[col_pos_pos]
                     // b_{kj} = other.values[other_col_pos_pos]
-                    mat[i][j] += self.values[col_pos_pos] * other.values[other_col_pos_pos]
+                    // mat[i][j] += self.values[col_pos_pos] * other.values[other_col_pos_pos]
+                    mat.set(i,j , mat.get(i, j) +   self.values[col_pos_pos] * other.values[other_col_pos_pos]);
 
                 }
             }
-
-
-            // for k in self.col_pos[i]..self.col_pos[i+1] {
-            //     for j in other.col_pos
-            // }
         }
 
         mat
     }
 
+
+    pub fn to_dense(&self) -> Dense {
+        let m = self.shape.0;
+        let n = self.shape.1;
+        // let mut mat = vec![vec![0.;n];m];
+        let mut mat = Dense::new_zeros((m,n));
+
+        for i in 0..m {
+            for col_pos_pos in self.row_pos[i]..self.row_pos[i+1] {
+                let k = self.col_pos[col_pos_pos];
+                mat.set(i,k, self.values[col_pos_pos]);
+            }
+        }
+
+        mat
+    }
 
 
 }

@@ -1,6 +1,7 @@
-use std::path::Path;
 use std::io::{BufRead, BufReader};
 use std::fs::File;
+
+use super::Dense;
 
 pub struct COO {
     pub data: Vec<(usize, usize, f64)>,
@@ -68,6 +69,14 @@ impl COO {
         for (i,j,x) in &self.data {
             println!("self[{}][{}] = {}", i,j,x);
         }
+    }
+
+    pub fn to_dense(&self) -> Dense {
+        let mut mat = Dense::new_zeros((self.shape.0, self.shape.1));
+        for (i,j,x) in &self.data {
+            mat.set(*i, *j, *x);
+        }
+        mat
     }
 
     
