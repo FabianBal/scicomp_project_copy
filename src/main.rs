@@ -1,12 +1,11 @@
-
+use std::path::Path;
 
 use faksgpu::cpu::{COO, CSR, Dense};
 
 fn main() {
     println!("hi");
 
-    let fname = "data/a01.mm";
-    let fname = "data/a01.mm";
+    let fname = Path::new("data/a01.mm");
     let coo = COO::read_mtx(fname).expect(":(");
     coo.print();
     coo.to_dense().print();
@@ -31,7 +30,8 @@ fn main() {
     // let d = Dense::new_zeros((3,3));
     // d.print();
 
-    let a002 = COO::read_mtx("matrix_instances/generated/case_0000_A.mtx").expect(":(");
+    // let a002 = COO::read_mtx("matrix_instances/generated/case_0000_A.mtx").expect(":(");
+    let a002 = COO::read_mtx(Path::new("matrix_instances/generated/case_0000_A.mtx")).expect(":(");
     a002.to_dense().print();
 
 

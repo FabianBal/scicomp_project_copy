@@ -1,5 +1,6 @@
 use std::io::{BufRead, BufReader};
 use std::fs::File;
+use std::path::Path;
 
 use super::Dense;
 
@@ -12,7 +13,7 @@ impl COO {
 
     // Read mtx-file, its honestly almost the same thing as
     // in the last homeworks, so I didn't comment too much
-    pub fn read_mtx(fname: &str) -> Result<Self, &str>{
+    pub fn read_mtx(fname: &Path) -> Result<Self, &str>{
         println!("lade {:?}", fname);
 
         let err_msg = "Error parsing file.";

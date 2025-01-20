@@ -1,4 +1,13 @@
+use std::path::Path;
+
 use faksgpu::cpu::*;
+
+// Im Endeffekt etwas umständlich über Path joinen.
+// Kann man auch mit String-Concat machen, aber
+// ich wollte Fehler mit / vermeiden
+const DATA_PATH: &str = "matrix_instances";
+
+
 
 
 #[cfg(test)]
@@ -12,8 +21,8 @@ fn test_read_coo() {
     let eps = 1e-10;
 
     // a001.mtx
-
-    let coo = COO::read_mtx("matrix_instances/a001.mtx").expect("Failed reading matrix during test");
+    let fname1 = Path::new(DATA_PATH).join(&Path::new("a001.mtx"));
+    let coo = COO::read_mtx(&fname1).expect("Failed reading matrix during test");
 
     assert_eq!(coo.shape.0, 3);
     assert_eq!(coo.shape.1, 3);
@@ -28,8 +37,8 @@ fn test_read_coo() {
     }
 
     // a002.mtx
-
-    let coo = COO::read_mtx("matrix_instances/a002.mtx").expect("Failed reading matrix during test");
+    let fname2 = Path::new(DATA_PATH).join(&Path::new("a002.mtx"));
+    let coo = COO::read_mtx(&fname2).expect("Failed reading matrix during test");
 
     assert_eq!(coo.shape.0, 2);
     assert_eq!(coo.shape.1, 3);
