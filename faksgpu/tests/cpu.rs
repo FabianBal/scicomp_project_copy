@@ -5,7 +5,7 @@ use faksgpu::cpu::*;
 // Im Endeffekt etwas umständlich über Path joinen.
 // Kann man auch mit String-Concat machen, aber
 // ich wollte Fehler mit / vermeiden
-const DATA_PATH: &str = "matrix_instances";
+const DATA_PATH: &str = "../matrix_instances";
 
 
 
