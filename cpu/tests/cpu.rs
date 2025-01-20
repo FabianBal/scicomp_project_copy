@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use faksgpu::cpu::*;
+use fakscpu::cpu::*;
 
 // Im Endeffekt etwas umständlich über Path joinen.
 // Kann man auch mit String-Concat machen, aber

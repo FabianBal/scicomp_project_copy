@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use faksgpu::cpu::{COO, CSR, Dense};
+use fakscpu::cpu::{COO, CSR, Dense};
 
 fn main() {
     println!("hi");
@@ -31,8 +31,8 @@ fn main() {
     // d.print();
 
     // let a002 = COO::read_mtx("matrix_instances/generated/case_0000_A.mtx").expect(":(");
-    let a002 = COO::read_mtx(Path::new("../matrix_instances/generated/case_0000_A.mtx")).expect(":(");
-    a002.to_dense().print();
+    // let a002 = COO::read_mtx(Path::new("../matrix_instances/generated/case_0000_A.mtx")).expect(":(");
+    // a002.to_dense().print();
 
 
 }
