@@ -6,7 +6,7 @@ fn main() {
     println!("hi");
 
     let fname = Path::new("../matrix_instances/a001.mtx");
-    let coo = COO::read_mtx(fname).expect(":(");
+    let coo = COO::read_mtx(fname, false).expect(":(");
     coo.print();
     coo.to_dense().print();
 
@@ -31,8 +31,11 @@ fn main() {
     // d.print();
 
     // let a002 = COO::read_mtx("matrix_instances/generated/case_0000_A.mtx").expect(":(");
-    // let a002 = COO::read_mtx(Path::new("../matrix_instances/generated/case_0000_A.mtx")).expect(":(");
+    let mut a002 = COO::read_mtx(Path::new("../matrix_instances/generated/case_0000_A.mtx"), true).expect(":(");
     // a002.to_dense().print();
+
+    // a002.data.sort_by(|a, b| (a.0, a.1).cmp(&(b.0, b.1)));
+    println!("{:?}", a002.data);
 
 
 }

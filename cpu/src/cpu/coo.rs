@@ -13,8 +13,9 @@ impl COO {
 
     // Read mtx-file, its honestly almost the same thing as
     // in the last homeworks, so I didn't comment too much
-    pub fn read_mtx(fname: &Path) -> Result<Self, &str>{
-        println!("lade {:?}", fname);
+    // If sort_data is true, the coordiante data is sorted by indices
+    pub fn read_mtx(fname: &Path, sort_data: bool) -> Result<Self, &str>{
+        // println!("Loading {:?}", fname);
 
         let err_msg = "Error parsing file.";
 
@@ -58,6 +59,10 @@ impl COO {
             let v: f64 = split.next().ok_or(err_msg)?.parse().map_err(|_| (err_msg))?;
             
             data.push((i,j,v));
+        }
+
+        if sort_data {
+            data.sort_by(|a, b| (a.0, a.1).cmp(&(b.0, b.1)));
         }
 
         Ok(COO{data, shape})
