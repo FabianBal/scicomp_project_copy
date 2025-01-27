@@ -84,11 +84,11 @@ fn test_product_csr() {
 
     for k in 0..n {
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
-        let A = COO::read_mtx(&fname, false).expect("Failed reading matrix during test");
+        let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_B.mtx", k)));
-        let B = COO::read_mtx(&fname, false).expect("Failed reading matrix during test");
+        let B = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_C.mtx", k)));
-        let C = COO::read_mtx(&fname, false).expect("Failed reading matrix during test");
+        let C = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
 
         let A = CSR::from_coo(A);
         let B = CSR::from_coo(B);
