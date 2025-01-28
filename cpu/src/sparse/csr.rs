@@ -2,7 +2,8 @@ use std::sync::{Mutex, Arc};
 
 use rayon::prelude::*;
 
-use super::{Dense, COO};
+use super::COO;
+use crate::Dense;
 
 
 // CSR format from "Two Fast Algorithms for Sparse Matrices: Multiplication and Permuted Transposition", Rice, Gustavson
@@ -218,12 +219,9 @@ impl CSR {
     pub fn product_sparse_par(&self, other: &CSR) -> CSR {
         let m = self.shape.0;
         let n = other.shape.1;
-        // let mut mat = Dense::new_zeros((m,n));
 
-        // let mut res_rows: Vec<(usize, Vec<f64>)> = vec![];
-        let mut res_rows: Arc<Mutex<Vec<(usize, Vec<f64>)>>> = Arc::new(Mutex::new(vec![]));
-        let mut res_col_idxs: Arc<Mutex<Vec<(usize, Vec<usize>)>>> =  Arc::new(Mutex::new(vec![]));
-        // let mut res_col_idxs: Arc<Mutex<Vec<(usize, Vec<usize>)>> = vec![];
+        let res_rows: Arc<Mutex<Vec<(usize, Vec<f64>)>>> = Arc::new(Mutex::new(vec![]));
+        let res_col_idxs: Arc<Mutex<Vec<(usize, Vec<usize>)>>> =  Arc::new(Mutex::new(vec![]));
 
         (0..m).into_par_iter()
         .for_each(|i| {
@@ -270,11 +268,7 @@ impl CSR {
             let mut rci = res_col_idxs.lock().unwrap();
 
             rr.push((i,res_curr_row_final_val));
-            rci.push((i,res_curr_row_final_col_idx));
-
-            // res_rows.push((i,res_curr_row_final_val));
-            // res_col_idxs.push((i,res_curr_row_final_col_idx));
-        
+            rci.push((i,res_curr_row_final_col_idx));        
         });
 
 
@@ -299,9 +293,7 @@ impl CSR {
 
         row_pos.push(values.len());
 
-        // CSR{row_pos, col_pos, values, shape: (m,n)}
         CSR{row_pos, col_pos, values, shape: (m,n)}
-        // todo!()
 
     }
 

@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use fakscpu::cpu::{COO, CSR, Dense};
+use fakscpu::{sparse::{COO, CSR}, Dense};
+
 
 fn main() {
     println!("hi");
@@ -45,41 +46,6 @@ fn main() {
 
     // a002.data.sort_by(|a, b| (a.0, a.1).cmp(&(b.0, b.1)));
     // println!("{:?}", a002.data);
-
-
-
-
-
-
-
-    println!("************************");
-    let DATA_PATH: &str = "../matrix_instances";
-
-
-    let k= 9;
-
-    let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
-    let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
-    let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_B.mtx", k)));
-    let B = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
-    let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_C.mtx", k)));
-    let C = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
-
-    let A = CSR::from_coo(A);
-    let B = CSR::from_coo(B);
-    let C = C.to_dense();
-    
-
-    C.print();
-    
-
-    let C_test = A.product_sparse_par(&B);
-    // let C_test = C_test.to_dense();
-
-
-
-
-
 
 
 }

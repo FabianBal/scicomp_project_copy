@@ -2,7 +2,7 @@ use std::io::{BufRead, BufReader};
 use std::fs::File;
 use std::path::Path;
 
-use super::Dense;
+use crate::Dense;
 
 pub struct COO {
     pub data: Vec<(usize, usize, f64)>,
@@ -91,3 +91,4 @@ impl COO {
 
 
 }
+

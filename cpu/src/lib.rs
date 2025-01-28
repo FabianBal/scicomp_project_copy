@@ -1,6 +1,7 @@
-pub mod cpu;
+pub mod sparse;
 
-
+pub mod dense;
+pub use dense::Dense;
 
 
 
