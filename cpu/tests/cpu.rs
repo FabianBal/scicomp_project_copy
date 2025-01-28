@@ -80,7 +80,7 @@ fn test_product_csr() {
     let eps = 1e-7;
 
     // Number of matrices to test
-    let n = 2;    
+    let n = 9;    
 
     for k in 0..n {
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
@@ -114,9 +114,11 @@ fn test_product_csr_sparse() {
     let eps = 1e-7;
 
     // Number of matrices to test
-    let n = 2;    
+    let n = 9;    
 
     for k in 0..n {
+        println!("Testing n={}", n);
+
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
         let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_B.mtx", k)));
@@ -128,7 +130,7 @@ fn test_product_csr_sparse() {
         let B = CSR::from_coo(B);
         let C = C.to_dense();
         
-        let C_test = A.product_sparse(&B).to_dense();
+        let C_test = A.product_sparse_par(&B).to_dense();
 
         C.print();
         C_test.print();
