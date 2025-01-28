@@ -134,30 +134,26 @@ impl CSR {
 
 
 
+    // For the general algorithm see above
+    // This is a modification for directly saving CSR
+    // via dense intermediate results, suited for
+    // parallel execution
     pub fn product_sparse(&self, other: &CSR) -> CSR {
-        // let data = vec![];
         let m = self.shape.0;
         let n = other.shape.1;
-        // let mut mat = vec![vec![0.;n];m];
-        let mut mat = Dense::new_zeros((m,n));
+        // let mut mat = Dense::new_zeros((m,n));
 
         let mut res_rows: Vec<Vec<f64>> = vec![];
         let mut res_col_idxs: Vec<Vec<usize>> = vec![];
 
         for i in 0..m {
-            // iterate over all non-zero cols of A_{i*}
-            // let mut nnz = 0;            
-            // let mut row_indices_other = vec![];
-            // for col_pos_pos in other.row_pos[i]..other.row_pos[i+1] {
-            //     nnz += other.get_row_nnz(other.col_pos[col_pos_pos]);
-            //     // println!("AAA {} {}", k, col_pos_pos);
-            //     row_indices_other.push(other.col_pos[col_pos_pos]);
-            // }
+            // Iterate over all non-zero cols of A_{i*}
 
-            
+            // Create a dense row for the result matrix, C_{i*}
+            // and also a bool array that flags if some non-zero
+            // entry for the k-th (i.e. for C_{ik}) is calculated.            
             let mut nz_row_marker = vec![false;n];
             let mut res_curr_row = vec![0.;n];
-
 
 
             for col_pos_pos in self.row_pos[i]..self.row_pos[i+1] {
@@ -177,40 +173,25 @@ impl CSR {
                 }
             }
 
-
-            // println!("in i={}, row fin {:?}", i, res_curr_row);
-            // println!("in i={}, nz idx {:?}", i, nz_row_marker);
-
-            // println!("LENS i={}: {} {} {}", i, (row_indices_other).len(), nz_row_marker.len(), res_curr_row.len());
-
+            // Go through the row, which may contain 0 entries.
+            // If !marker, then the k-col is 0 and can be ignored
+            // Save only non-zero entries and their index
             let mut res_curr_row_final_val = vec![];
             let mut res_curr_row_final_col_idx = vec![];
-            // for ((col_pos_pos, marker), x) in row_indices_other.iter().zip(nz_row_marker).zip(res_curr_row) {
             for ((k, x), marker) in res_curr_row.iter().enumerate().into_iter().zip(nz_row_marker) {
-                // println!("aaaaa {} {} {}", other.col_pos[*col_pos_pos], marker, x);
                 if marker {
                     res_curr_row_final_val.push(*x);
                     res_curr_row_final_col_idx.push(k);
-                    // println!("AsaaAa {}", x);
                 }
             }
-
-
-
+            
+            // Push the final result for the current row
             res_rows.push(res_curr_row_final_val);
             res_col_idxs.push(res_curr_row_final_col_idx);
         }
 
-        for r in &res_rows {
-            println!("res rows {:?}", *r);
-        } 
-        for r in &res_col_idxs {
-            println!("res col idx {:?}", *r);
-        }
 
-
-
-
+        // Create the row_pos vector and flatten the other
         let mut row_pos_counter = 0;
         let mut row_pos = vec![0];
 
@@ -226,21 +207,6 @@ impl CSR {
 
         CSR{row_pos, col_pos, values, shape: (m,n)}
 
-
-
-        // let mut col_pos = vec![];
-        // let mut values = vec![];
-
-        
-        // for (cols, vals) in res_col_idxs.iter().zip(res_rows) {
-        //     row_pos_counter += cols.len();
-        //     row_pos.push(row_pos_counter);
-
-        //     col_pos.concat()
-        // }
-        
-
-        // mat
     }
 
 
