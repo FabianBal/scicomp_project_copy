@@ -73,9 +73,9 @@ for testcase in range(0, N_matrices):
     B = sp.sparse.random_array((m,l), density=density)
     C = A.dot(B).tocoo()
     
-    fname_A = join(base_dir, "case_" + str(testcase).zfill(4) + "_A.mtx")
-    fname_B = join(base_dir, "case_" + str(testcase).zfill(4) + "_B.mtx")
-    fname_C = join(base_dir, "case_" + str(testcase).zfill(4) + "_C.mtx")
+    fname_A = join(base_dir, fname + "_" + str(testcase).zfill(4) + "_A.mtx")
+    fname_B = join(base_dir, fname + "_" + str(testcase).zfill(4) + "_B.mtx")
+    fname_C = join(base_dir, fname + "_" + str(testcase).zfill(4) + "_C.mtx")
 
     write_mtx_coo(fname_A, A)
     write_mtx_coo(fname_B, B)
