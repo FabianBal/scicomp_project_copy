@@ -1,0 +1,8 @@
+[package]
+name = "cublas"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cust = "0.3"
+cublas-sys = "0.1.0"
