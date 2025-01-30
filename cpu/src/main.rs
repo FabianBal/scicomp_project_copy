@@ -1,6 +1,24 @@
 use std::path::Path;
 
-use fakscpu::{sparse::{COO, CSR}, Dense};
+use fakscpu::CSR;
+use matrix_base::{Dense, COO};
+
+// use matrix_base::HAHA;
+
+// trait yea {
+
+//     fn yo(&self);
+
+// }
+
+// impl yea for HAHA {
+//     fn yo (&self) {
+//         self.x * 4;
+//     }
+// }
+
+
+
 
 
 fn main() {

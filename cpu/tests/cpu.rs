@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use fakscpu::{sparse::*, Dense};
+use fakscpu::CSR;
+use matrix_base::{Dense, COO};
 
 // Im Endeffekt etwas umständlich über Path joinen.
 // Kann man auch mit String-Concat machen, aber

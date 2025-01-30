@@ -1,7 +1,6 @@
-pub mod sparse;
+pub mod csr;
+pub use csr::CSR;
 
-pub mod dense;
-pub use dense::Dense;
 
 
 

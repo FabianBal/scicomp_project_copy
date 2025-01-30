@@ -2,8 +2,8 @@ use std::sync::{Mutex, Arc};
 
 use rayon::prelude::*;
 
-use super::COO;
-use crate::Dense;
+// use super::COO;
+use matrix_base::{Dense, COO};
 
 
 // CSR format from "Two Fast Algorithms for Sparse Matrices: Multiplication and Permuted Transposition", Rice, Gustavson

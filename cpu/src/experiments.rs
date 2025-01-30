@@ -1,8 +1,8 @@
 use std::path::Path;
 use std::{time::Instant, env};
 
-use fakscpu::{sparse::{COO, CSR}, Dense};
-
+use fakscpu::CSR;
+use matrix_base::{Dense, COO};
 
 
 
