@@ -1,7 +1,10 @@
 use std::{env, fs, path::{Path, PathBuf}};
-
 use matrix_base::{COO, CSR, Dense};
+
+/// Benchmark matrix multiplication using different libraries
+/// load all matrices from provided folder path or default and benchmark all possible combinations
 fn main() {
+    // Default folder path
     let mut folder_path = "./matrix_instances";
 
     // Get the folder path from command-line arguments if provided
@@ -10,13 +13,15 @@ fn main() {
         folder_path = &args[1];
 
     }
+
+    // search matrices in the folder
     let matrix_paths = get_matrix_paths(folder_path);
     println!("Found {} matrices in '{}'", matrix_paths.len(), folder_path);
     
     //start benchmarking
     for matrix1_path in &matrix_paths {
         for matrix2_path in &matrix_paths {
-            //ToDo: needs to make sure that the matrices are compatible
+            //ToDo: need to make sure that the matrices are compatible
             println!("\nBenchmarking {} X {}", matrix1_path.file_name().unwrap().to_str().unwrap(), matrix2_path.file_name().unwrap().to_str().unwrap());
             benchmark_matrix(matrix1_path, matrix2_path);
         }
@@ -48,15 +53,14 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path) {
 
 // Returns all paths to matrices inside folder_path
 fn get_matrix_paths(folder_path: &str) -> Vec<PathBuf> {
-    let mut matrix_paths: Vec<PathBuf> = Vec::new();
-
     let path = Path::new(folder_path);
+    let mut matrix_paths: Vec<PathBuf> = Vec::new();
     if !path.is_dir() {
         eprintln!("Error: '{}' is not a valid directory.", folder_path);
         return matrix_paths;
     }
 
-    // Iterate over directory entries
+    // Iterate over directory entries and add .mtx file paths to matrix_paths
     let entries = fs::read_dir(path).expect("Failed to read directory");
     for entry in entries.flatten() {
         let file_path = entry.path();
