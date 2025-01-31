@@ -1,7 +1,7 @@
 use std::path::Path;
 
-use fakscpu::CSR;
-use matrix_base::{Dense, COO};
+use fakscpu::sparse::SparseProd;
+use matrix_base::{Dense, COO, CSR};
 
 // use matrix_base::HAHA;
 

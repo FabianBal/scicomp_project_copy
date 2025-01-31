@@ -14,7 +14,8 @@ Under `[dependencies]`, add `fakscpu = { path = "../cpu" }`.
 Below a code example, which demonstrates the functionality of this crate
 
 ```rust
-use matrix_base::{Dense, COO};
+use matrix_base::{Dense, COO, CSR};
+use fakscpu::sparse::SparseProd;
 
 fn main() {
     // Load MTX file into COO format
