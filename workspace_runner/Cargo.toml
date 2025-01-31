@@ -1,11 +1,9 @@
 [package]
-name = "cusparse"
+name = "workspace_runner"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cust = "0.3"
 matrix_base = { path = "../matrix_base" }
-
-[build-dependencies]
-bindgen = "0.71.1"
+cublas = {path = "../cublas"}
+cusparse = {path = "../cusparse"}

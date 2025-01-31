@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+matrix_base = { path = "../matrix_base" }
 cust = "0.3"
 cublas-sys = "0.1.0"
