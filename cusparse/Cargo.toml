@@ -1,0 +1,10 @@
+[package]
+name = "cusparse"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cust = "0.3"
+
+[build-dependencies]
+bindgen = "0.71.1"
