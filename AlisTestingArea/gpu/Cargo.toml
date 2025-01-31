@@ -1,0 +1,29 @@
+[package]
+name = "gpu_sparse_ali"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+matrix_base = { path = "../../matrix_base" }
+
+tokio = { version = "1.43.0", features = ["full"] }
+bytemuck = "1.21.0"
+env_logger = "0.11.6"
+pollster = "0.4"
+wgpu = "24.0.0"
+#winit = "0.29"
+futures-intrusive = "0.5"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+
+[[bin]]
+name = "sparse_dev"
+path = "src/sparse_dev.rs"
+
+
+[[bin]]
+name = "dense_dev"
+path = "src/dense_dev.rs"
