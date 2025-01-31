@@ -25,6 +25,8 @@ Die Dateien haben den Namen `name_0000_A.mtx`, `name_0001_A.mtx`, etc. Es werden
 
 Der Standard-Output-Ordner kann festgelegt werden mit `--basedir=matrix_instances/lieber/anderer/ordner`.
 
+Wenn kein Produkt gewünscht ist, kann der `--noproduct`-Parameter angegeben werden.
+
 ### Dense Matrix Generation
 
 `generate_matrices_sparse.py`: In Arbeit, bitte ignorieren.
