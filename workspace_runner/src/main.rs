@@ -1,5 +1,6 @@
 use std::{env, fs, path::{Path, PathBuf}, vec};
 use matrix_base::{COO, CSR, Dense};
+use fakscpu::sparse::SparseProd;
 
 /// Benchmark matrix multiplication using different libraries
 /// load all matrices from provided folder path or default and benchmark all possible combinations
@@ -22,11 +23,21 @@ fn main() {
     println!("Found {} matrices in '{}'", matrix_paths.len(), folder_path);
     
     //start benchmarking
+    // Print table header
+    println!("{:<20} {:<20} {:<20} {:<20} {:<30} {:<20} {:<20}", 
+             "Matrix 1", "Matrix 2", "cpuDense (ns)", "cpuSparse (ns)", "cpuSparseParallel (ns)", "cuBLAS (ns)", "cuSPARSE (ns)");
+
     for matrix1_path in &matrix_paths {
         for matrix2_path in &matrix_paths {
-            //ToDo: need to make sure that the matrices are compatible
-            println!("\nBenchmarking {} X {}", matrix1_path.file_name().unwrap().to_str().unwrap(), matrix2_path.file_name().unwrap().to_str().unwrap());
-            benchmark_matrix(matrix1_path, matrix2_path, repeat_count);
+            // Make sure that the matrices are compatible
+            if COO::read_mtx(&matrix1_path, false).unwrap().shape.1 == COO::read_mtx(&matrix2_path, false).unwrap().shape.0 {
+                let matrix1_name = matrix1_path.file_name().unwrap().to_str().unwrap();
+                let matrix2_name = matrix2_path.file_name().unwrap().to_str().unwrap();
+                // println!("\nBenchmarking {} X {}", matrix1_name, matrix2_name);
+                let avg_times = benchmark_matrix(matrix1_path, matrix2_path, repeat_count);
+                println!("{:<20} {:<20} {:<20} {:<20} {:<30} {:<20} {:<20}", 
+                         matrix1_name, matrix2_name, avg_times[0], avg_times[1], avg_times[2], avg_times[3], avg_times[4]);
+            }
         }
     }
 }
@@ -39,13 +50,32 @@ fn import_matrix(matrix_path: &Path) -> (Dense, CSR) {
 }
 
 // Benchmark matrix multiplication
-fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usize) {
+fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usize) -> Vec<f64>{
     let (matrix1_dense, matrix1_csr) = import_matrix(matrix1_path);
     let (matrix2_dense, matrix2_csr) = import_matrix(matrix2_path);
 
+    let mut times_cpu_dense = Vec::with_capacity(repeat_count);
+    let mut times_cpu_sparse = Vec::with_capacity(repeat_count);
+    let mut times_cpu_sparse_parallel = Vec::with_capacity(repeat_count);
     let mut times_cublas = Vec::with_capacity(repeat_count);
     let mut times_cusparse = Vec::with_capacity(repeat_count);
     for _ in 1..=repeat_count {
+        let start = std::time::Instant::now();
+        // matrix1_dense.multiply(&matrix2_dense);
+        times_cpu_dense.push(start.elapsed().as_nanos());
+
+        let start = std::time::Instant::now();
+        matrix1_csr.product_sparse(&matrix2_csr);
+        times_cpu_sparse.push(start.elapsed().as_nanos());
+
+        let start = std::time::Instant::now();
+        matrix1_csr.product_sparse_par(&matrix2_csr);
+        times_cpu_sparse_parallel.push(start.elapsed().as_nanos());
+
+        let start = std::time::Instant::now();
+        matrix1_csr.product_sparse(&matrix2_csr);
+        times_cpu_sparse.push(start.elapsed().as_nanos());
+
         let start = std::time::Instant::now();
         cublas::multiply(&matrix1_dense, &matrix2_dense);
         times_cublas.push(start.elapsed().as_nanos());
@@ -57,9 +87,9 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
     }
     
     // Calculate average time
-    let times = vec![&times_cublas, &times_cusparse];
-    let avg_time: Vec<f64> = times.into_iter().map(|time| time.iter().sum::<u128>() as f64 / repeat_count as f64).collect();
-    println!("cuBLAS: {:.6} ns \t| cuSPARSE: {:.6} ns", avg_time[0], avg_time[1]);
+    let times = vec![times_cpu_dense, times_cpu_sparse, times_cpu_sparse_parallel, times_cublas, times_cusparse];
+    let avg_times: Vec<f64> = times.into_iter().map(|time| time.iter().sum::<u128>() as f64 / repeat_count as f64).collect();
+    avg_times
 }
 
 // Returns all paths to matrices inside folder_path
