@@ -1,5 +1,5 @@
-pub mod cpu;
-
+pub mod csr;
+pub use csr::CSR;
 
 
 

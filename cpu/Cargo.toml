@@ -4,3 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+rayon = "1.10.0"
+matrix_base = { path = "../matrix_base" }
+
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[[bin]]
+name = "experiments"
+path = "src/experiments.rs"
