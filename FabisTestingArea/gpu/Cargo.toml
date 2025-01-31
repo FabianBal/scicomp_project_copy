@@ -1,0 +1,16 @@
+[package]
+name = "gpu"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.43.0", features = ["full"] }
+bytemuck = "1.21.0"
+env_logger = "0.11.6"
+pollster = "0.4"
+wgpu = "24.0.0"
+winit = "0.29"
+futures-intrusive = "0.5"
+
+
+
