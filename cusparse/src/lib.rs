@@ -1,4 +1,4 @@
-use matrix_base::{Dense, COO, CSR};
+use matrix_base::{Dense, CSR};
 
 pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> Dense {
     println!("Multiplying two CSR matrices with cuSPARSE");
