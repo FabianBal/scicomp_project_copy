@@ -40,10 +40,10 @@ pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<Dense> {
             cublas_sys::cublasOperation_t::CUBLAS_OP_N, // No transpose B
             m, n, k,                                    // Matrix dimensions not sure which one is which
             &alpha, 
-            d_a.as_device_ptr().as_ptr(), k, 
-            d_b.as_device_ptr().as_ptr(), n, 
+            d_a.as_device_ptr().as_ptr(), m, 
+            d_b.as_device_ptr().as_ptr(), k, 
             &beta, 
-            d_c.as_device_ptr().as_mut_ptr(), n,
+            d_c.as_device_ptr().as_mut_ptr(), m,
         );
     }
 
