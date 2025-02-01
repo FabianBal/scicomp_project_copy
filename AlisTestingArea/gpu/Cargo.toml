@@ -27,3 +27,8 @@ path = "src/sparse_dev.rs"
 [[bin]]
 name = "dense_dev"
 path = "src/dense_dev.rs"
+
+
+[[bin]]
+name = "fun_dev"
+path = "src/fun_dev.rs"
