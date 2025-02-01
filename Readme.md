@@ -1,5 +1,29 @@
 # FAKSGPU Scientific Computing Project
 
+## Running the Benchmark  
+
+Before starting, ensure that all paths in `./cusparse/build.rs` match your local CUDA installation.  
+
+### Steps to Run:  
+
+1. Navigate to the project's root directory.  
+2. Run the following command:  
+
+   ```bash
+   cargo run --release <repeat_count> <path_to_matrices>
+   ```  
+
+   - Replace `<repeat_count>` with the number of times you want the benchmark to run.  
+   - Replace `<path_to_matrices>` with the directory containing your matrix instances.  
+
+   **Example:**  
+   ```bash
+   cargo run --release 1 ./matrix_instances/
+   ```
+
+This runs the benchmark once using the matrices in `./matrix_instances/`.
+
+
 ## Struktur
 
 ### Code
