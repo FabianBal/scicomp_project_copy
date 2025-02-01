@@ -36,6 +36,8 @@ fn size_prediction(A: &CSR, B: &CSR) -> usize {
 
 #[tokio::main]
 async fn main() {
+    let batch_size = 18;
+
     // let instance = wgpu::Instance::default();
     // let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
     // let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default(), None).await.unwrap();
@@ -59,9 +61,12 @@ async fn main() {
 
     let nnz_pred = size_prediction(&a, &b);
 
-    let buffer_c = CSRBuffer::new_output(&device, &a, nnz_pred, "C", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC);
-    let buffer_c_staging = CSRBuffer::new_output(&device, &a, nnz_pred, "C (staging)", wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,);
+    // let buffer_c = CSRBuffer::new_output(&device, nnz_pred, "C", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC);
+    // let buffer_c_staging = CSRBuffer::new_output(&device, nnz_pred, "C (staging)", wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,);
 
+
+    let buffer_res = ResultBuffer::new(&device, nnz_pred, b.shape.1, batch_size, "C", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC);
+    let buffer_res_staging = ResultBuffer::new(&device, nnz_pred, b.shape.1, batch_size, "C", wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST);
 
     // Load Shader
 
@@ -76,7 +81,9 @@ async fn main() {
 
     let bg_a_entries = buffer_a.gen_bind_group_entries(0, BufferIO::Input);
     let bg_b_entries = buffer_b.gen_bind_group_entries(0, BufferIO::Input);
-    let bg_c_entries = buffer_c.gen_bind_group_entries(0, BufferIO::Output);
+    // let bg_c_entries = buffer_c.gen_bind_group_entries(0, BufferIO::Output);
+
+    let bg_res_entries = buffer_res.gen_bind_group_entries(0, BufferIO::Output);
 
     // let bg_entries = vec![bg_a, bg_b, bg_c].concat();
 
@@ -88,14 +95,21 @@ async fn main() {
         label: Some("Bind Group Layout: Matrix B"),
         entries: &bg_b_entries
     });  
-    let bg_c_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        label: Some("Bind Group Layout: Matrix C"),
-        entries: &bg_c_entries
+    // let bg_c_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+    //     label: Some("Bind Group Layout: Matrix C"),
+    //     entries: &bg_c_entries
+    // });
+
+    let bg_res_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        label: Some("Bind Group Layout: Result"),
+        entries: &bg_res_entries
     });
+
+
     
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("Compute Pipeline Layout"),
-        bind_group_layouts: &[&bg_a_layout, &bg_b_layout, &bg_c_layout],
+        bind_group_layouts: &[&bg_a_layout, &bg_b_layout, &bg_res_layout],
         push_constant_ranges: &[],
     });
 
@@ -107,6 +121,9 @@ async fn main() {
         compilation_options: wgpu::PipelineCompilationOptions::default(),
         cache: None,
     });
+    
+
+    
 
 
     // let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -122,7 +139,9 @@ async fn main() {
 
     let bg_a = buffer_a.create_bind_group(&device, &bg_a_layout);
     let bg_b = buffer_b.create_bind_group(&device, &bg_b_layout);
-    let bg_c = buffer_c.create_bind_group(&device, &bg_c_layout);
+    // let bg_c = buffer_c.create_bind_group(&device, &bg_c_layout);
+
+    let bg_res = buffer_res.create_bind_group(&device, &bg_res_layout);
 
 
     let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("Compute Encoder") });
@@ -138,32 +157,52 @@ async fn main() {
         compute_pass.set_pipeline(&pipeline);
         compute_pass.set_bind_group(0, &bg_a, &[]);
         compute_pass.set_bind_group(1, &bg_b, &[]);
-        compute_pass.set_bind_group(2, &bg_c, &[]);
-        compute_pass.dispatch_workgroups(18,1, 1); // Angepasste Dispatch-Parameter
+        // compute_pass.set_bind_group(2, &bg_c, &[]);
+        compute_pass.set_bind_group(2, &bg_res, &[]);
+        compute_pass.dispatch_workgroups(1,1, 1); // Angepasste Dispatch-Parameter
     }
 
     // queue.submit(Some(encoder.finish()));
 
 
     // let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("Copy Encoder") });
-    // encoder.copy_buffer_to_buffer(&buffer_c.shape, 0, &buffer_c_staging.shape, 0, 8 as u64);
+
+
+    // encoder.copy_buffer_to_buffer(&buffer_res.shape, 0, &buffer_c_staging.shape, 0, 8 as u64);
     // encoder.copy_buffer_to_buffer(&buffer_c, 0, &staging_buffer, 0, (size * size * std::mem::size_of::<f32>() as u32) as u64);
-    buffer_c.copy_b2b(&buffer_c_staging, nnz_pred, &mut encoder);
+    buffer_res.copy_b2b(&buffer_res_staging, nnz_pred, b.shape.1, batch_size,&mut encoder);
     queue.submit(Some(encoder.finish()));
 
-    let buffer_slice = buffer_c_staging.shape.slice(..);
-    let (sender, receiver) = oneshot_channel();
+    let result_buffer_idx = buffer_res_staging.idx.slice(..);
+    let result_buffer_glob_data = buffer_res_staging.glob_data.slice(..);
 
+
+    let (sender, receiver_idx) = oneshot_channel();
     unsafe {
-        buffer_slice.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());
+        result_buffer_idx.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());
+    } 
+    
+
+    let (sender, receiver_data) = oneshot_channel();
+    unsafe {        
+        result_buffer_glob_data.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());
     }
 
-    device.poll(wgpu::Maintain::Wait);
-    receiver.receive().await.unwrap().unwrap();
 
-    let data = buffer_slice.get_mapped_range();
-    let result: &[u32] = bytemuck::cast_slice(&data);
+    device.poll(wgpu::Maintain::Wait);
+    receiver_idx.receive().await.unwrap().unwrap();
+    receiver_data.receive().await.unwrap().unwrap();
+
+    let data_result_idx = result_buffer_idx.get_mapped_range();
+    let result: &[u32] = bytemuck::cast_slice(&data_result_idx);
     println!("Ergebnis-Matrix: {:?}", result);
+
+
+    let data_result_idx = result_buffer_glob_data.get_mapped_range();
+    let result: &[GlobDataEntry] = bytemuck::cast_slice(&data_result_idx);
+    println!("Ergebnis-Matrix: {:?}", result.len());
+
+
 
 
 
