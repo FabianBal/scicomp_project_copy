@@ -24,7 +24,7 @@ fn main() {
     
     // Print table header
     println!("{:<20} {:<20} {:<20} {:<20} {:<30} {:<20} {:<20}", 
-    "Matrix 1", "Matrix 2", "cpuDense (ns)", "cpuSparse (ns)", "cpuSparseParallel (ns)", "cuBLAS (ns)", "cuSPARSE (ns)");
+    "Matrix 1", "Matrix 2", "cpuDense (µs)", "cpuSparse (µs)", "cpuSparseParallel (µs)", "cuBLAS (µs)", "cuSPARSE (µs)");
     
     // Benchmark all possible combinations of matrices
     for matrix1_path in &matrix_paths {
@@ -65,27 +65,27 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
     for _ in 1..=repeat_count {
         let start = std::time::Instant::now();
         // matrix1_dense.multiply(&matrix2_dense);
-        times_cpu_dense.push(start.elapsed().as_nanos());
+        times_cpu_dense.push(start.elapsed().as_micros());
 
         let start = std::time::Instant::now();
         matrix1_csr.product_sparse(&matrix2_csr);
-        times_cpu_sparse.push(start.elapsed().as_nanos());
+        times_cpu_sparse.push(start.elapsed().as_micros());
 
         let start = std::time::Instant::now();
         matrix1_csr.product_sparse_par(&matrix2_csr);
-        times_cpu_sparse_parallel.push(start.elapsed().as_nanos());
+        times_cpu_sparse_parallel.push(start.elapsed().as_micros());
 
         let start = std::time::Instant::now();
         matrix1_csr.product_sparse(&matrix2_csr);
-        times_cpu_sparse.push(start.elapsed().as_nanos());
+        times_cpu_sparse.push(start.elapsed().as_micros());
 
         let start = std::time::Instant::now();
         let _ = cublas::multiply(&matrix1_dense, &matrix2_dense);
-        times_cublas.push(start.elapsed().as_nanos());
+        times_cublas.push(start.elapsed().as_micros());
         
         let start = std::time::Instant::now();
         let _ = cusparse::multiply(&matrix1_csr, &matrix2_csr);
-        times_cusparse.push(start.elapsed().as_nanos());
+        times_cusparse.push(start.elapsed().as_micros());
         
     }
     
