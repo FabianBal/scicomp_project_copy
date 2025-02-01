@@ -1,5 +1,6 @@
 use std::path::Path;
 use std::process::Command;
+use std::result;
 use std::sync::Arc;
 
 use wgpu::{util::DeviceExt, Buffer};
@@ -55,9 +56,10 @@ async fn main() {
     let b = CSR::from_coo(b);
 
 
+
     // Create Buffer for CSR Matrix Data 
     let buffer_a = CSRBuffer::new(&device, &a, "A", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC);
-    let buffer_b = CSRBuffer::new(&device, &a, "B", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC);
+    let buffer_b = CSRBuffer::new(&device, &b, "B", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC);
 
     let nnz_pred = size_prediction(&a, &b);
 
@@ -195,16 +197,38 @@ async fn main() {
 
     let data_result_idx = result_buffer_idx.get_mapped_range();
     let result: &[u32] = bytemuck::cast_slice(&data_result_idx);
-    println!("Ergebnis-Matrix: {:?}", result);
+    let n_c_data = result[0];
+    println!("Ergebnis-Matrix: {:?}", n_c_data);
 
 
     let data_result_idx = result_buffer_glob_data.get_mapped_range();
     let result: &[GlobDataEntry] = bytemuck::cast_slice(&data_result_idx);
-    println!("Ergebnis-Matrix: {:?}", result.len());
+
+    let gd = result[0];
+
+    // println!("Ergebnis-Matrix: {:?}", result[0]);
+    // println!("Ergebnis-Matrix: {:?}", result[0].x);
+    
 
 
+    // println!("A.row_pos = {:?}", a.row_pos);
+    // println!("A.row_pos = {:?}", a.col_pos);
+    // println!("A.row_pos = {:?}", a.values);
 
 
+    let c = COO::read_mtx(Path::new("../../matrix_instances/generated/case_0000_C.mtx"), true).expect("Failed reading matrix file.");
+    let c = c.to_dense();
+    
+    for idx in 0..(n_c_data as usize) {
+        let gd = result[idx];
+        println!("({},{}) = {} ({})", gd.i, gd.j, gd.x, c.get(gd.i as usize, gd.j as usize));
+    }
+
+
+    // for idx in 0..(n_c_data as usize) {
+    //     let gd = result[idx];
+    //     println!("({},{}) = {} ", gd.i, gd.j, gd.x);
+    // }
 
 
    

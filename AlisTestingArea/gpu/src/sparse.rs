@@ -22,11 +22,11 @@ pub struct CSRBuffer {
 
 
 #[repr(C)]
-#[derive(Clone, Copy, Pod, Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable, Debug)]
 pub struct GlobDataEntry {
-    i: u32,
-    j: u32, 
-    x: f32
+    pub i: u32,
+    pub j: u32, 
+    pub x: f32
 }
 
 // #[repr(C)]
@@ -120,24 +120,29 @@ impl ResultBuffer {
 
 impl CSRBuffer {
     pub fn new(device: &Device, a: &CSR, name: &str, usage: BufferUsages) -> Self {
+        let row_pos: Vec<u32> = a.row_pos.iter().map(|i| (*i as u32) ).collect();
+        let col_pos: Vec<u32> = a.col_pos.iter().map(|j| (*j as u32) ).collect();
+        let values: Vec<f32> = a.values.iter().map(|x| (*x as f32) ).collect();
+
+
         let row_pos = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some(format!("CSR Matrix {}.row_pos", name).as_str()),
-            contents: bytemuck::cast_slice(&a.row_pos),
+            contents: bytemuck::cast_slice(&row_pos),
             usage: usage,
         });
         let col_pos = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some(format!("CSR Matrix {}.col_pos", name).as_str()),
-            contents: bytemuck::cast_slice(&a.col_pos),
+            contents: bytemuck::cast_slice(&col_pos),
             usage: usage,
         });
         let values = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some(format!("CSR Matrix {}.values", name).as_str()),
-            contents: bytemuck::cast_slice(&a.values),
+            contents: bytemuck::cast_slice(&values),
             usage: usage,
         });
         let shape = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some(format!("CSR Matrix {}.shape", name).as_str()),
-            contents: bytemuck::cast_slice(&[a.shape.0, a.shape.1]),
+            contents: bytemuck::cast_slice(&[a.shape.0 as u32, a.shape.1 as u32]),
             usage: usage,
         });
     
