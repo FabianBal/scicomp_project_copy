@@ -80,14 +80,12 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         times_cpu_sparse.push(start.elapsed().as_nanos());
 
         let start = std::time::Instant::now();
-        let cublasem = cublas::multiply(&matrix1_dense, &matrix2_dense);
+        let _ = cublas::multiply(&matrix1_dense, &matrix2_dense);
         times_cublas.push(start.elapsed().as_nanos());
-        cublasem.unwrap().print();
         
         let start = std::time::Instant::now();
-        let cusparsem = cusparse::multiply(&matrix1_csr, &matrix2_csr);
+        let _ = cusparse::multiply(&matrix1_csr, &matrix2_csr);
         times_cusparse.push(start.elapsed().as_nanos());
-        cusparsem.unwrap().to_dense().print();
         
     }
     

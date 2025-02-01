@@ -29,16 +29,16 @@ pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<CSR> {
     let mut cols_result: i64 = 0;
     let mut nnz_result: i64 = 0;
 
-    let d_csr_row_ptr1 = DeviceBuffer::from_slice(&matrix1.row_pos)?;
-    let d_csr_col_ind1 = DeviceBuffer::from_slice(&matrix1.col_pos)?;
-    let d_csr_values1 = DeviceBuffer::from_slice(&matrix1.values)?;
+    let d_csr_row_ptr1 = DeviceBuffer::from_slice(&matrix1.row_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>())?;
+    let d_csr_col_ind1 = DeviceBuffer::from_slice(&matrix1.col_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>())?;
+    let d_csr_values1 = DeviceBuffer::from_slice(&matrix1.values.iter().map(|value| *value as f32).collect::<Vec<f32>>())?;
 
-    let d_csr_row_ptr2 = DeviceBuffer::from_slice(&matrix2.row_pos)?;
-    let d_csr_col_ind2 = DeviceBuffer::from_slice(&matrix2.col_pos)?;
-    let d_csr_values2 = DeviceBuffer::from_slice(&matrix2.values)?;
+    let d_csr_row_ptr2 = DeviceBuffer::from_slice(&matrix2.row_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>())?;
+    let d_csr_col_ind2 = DeviceBuffer::from_slice(&matrix2.col_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>())?;
+    let d_csr_values2= DeviceBuffer::from_slice(&matrix2.values.iter().map(|value| *value as f32).collect::<Vec<f32>>())?;
     
-    let mut d_result_row_ptr: DeviceBuffer<usize> = DeviceBuffer::zeroed((rows_result + 1) as usize)?;//TodO: check if this is correct
-    let mut d_result_col_ind: DeviceBuffer<usize>;// = DeviceBuffer::zeroed((nnz1 + nnz2) as usize)?;
+    let mut d_result_row_ptr: DeviceBuffer<i32> = DeviceBuffer::zeroed((rows_result + 1) as usize)?;//TodO: check if this is correct
+    let mut d_result_col_ind: DeviceBuffer<i32>;// = DeviceBuffer::zeroed((nnz1 + nnz2) as usize)?;
     let mut d_result_values: DeviceBuffer<f32>;// = DeviceBuffer::zeroed((nnz1 + nnz2) as usize)?;
     
     let mut sparse_mat1: cusparseSpMatDescr_t = ptr::null_mut();
@@ -167,12 +167,10 @@ pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<CSR> {
             &mut buffer_size2,
             d_buffer2.as_device_ptr().as_mut_ptr() as *mut c_void,
         );
-        println!("buffer_size1: {}, buffer_size2: {}", buffer_size1, buffer_size2);
 
 
         cusparseSpMatGetSize(sparse_result, &mut rows_result, &mut cols_result, &mut nnz_result);
-        println!("rows_result: {}, cols_result: {}, nnz_result: {}", rows_result, cols_result, nnz_result);
-        d_result_col_ind = DeviceBuffer::zeroed((cols_result) as usize)?;//ToDo check if correct maybe nnz_result
+        d_result_col_ind = DeviceBuffer::zeroed((nnz_result) as usize)?;
         d_result_values = DeviceBuffer::zeroed((nnz_result) as usize)?;
         
         cusparseCsrSetPointers(sparse_result, d_result_row_ptr.as_device_ptr().as_mut_ptr() as *mut c_void, d_result_col_ind.as_device_ptr().as_mut_ptr() as *mut c_void, d_result_values.as_device_ptr().as_mut_ptr() as *mut c_void);
@@ -192,15 +190,14 @@ pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<CSR> {
         );
     }
 
-    let mut h_result_row_ptr = vec![0usize; (rows_result + 1) as usize];
-    let mut h_result_col_ind = vec![0usize; (cols_result) as usize];
+    let mut h_result_row_ptr = vec![0i32; (rows_result + 1) as usize];
+    let mut h_result_col_ind = vec![0i32; (nnz_result) as usize];
     let mut h_result_values = vec![0.0f32; (nnz_result) as usize];
     
     d_result_row_ptr.copy_to(&mut h_result_row_ptr)?;
     d_result_col_ind.copy_to(&mut h_result_col_ind)?;
     d_result_values.copy_to(&mut h_result_values)?;
 
-    println!("result values: {:?}", h_result_col_ind);
     
     // let nnz_result = h_result_row_ptr[rows1 as usize] as usize;
     
@@ -213,7 +210,7 @@ pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<CSR> {
         cusparseDestroySpMat(sparse_result);
         cusparseDestroy(cusparse_handle);
     }
-
+    
     Ok(CSR {
         row_pos: h_result_row_ptr.into_iter().map(|x| x as usize).chain(std::iter::once(nnz_result as usize)).collect(),
         col_pos: h_result_col_ind.into_iter().map(|x| x as usize).collect(),
