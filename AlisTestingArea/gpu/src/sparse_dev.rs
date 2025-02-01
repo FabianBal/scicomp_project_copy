@@ -6,163 +6,9 @@ use wgpu::{util::DeviceExt, Buffer};
 use wgpu::{BindGroup, BufferUsages, CommandEncoder, Device};
 use futures_intrusive::channel::shared::oneshot_channel;
 
-use gpu_sparse_ali::WgpuTask;
+use gpu_sparse_ali::*;
 
 use matrix_base::{COO, CSR};
-
-// #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-// #[repr(C)]
-// struct Rueber<N: usize> {
-//     x: usize,
-//     y: &[f32]
-// }
-
-
-enum BufferIO {
-    Input,
-    Output
-}
-
-
-
-struct CSRBuffer {
-    row_pos: Buffer,
-    col_pos: Buffer,
-    values: Buffer,
-    shape: Buffer,
-}
-
-
-impl CSRBuffer {
-    fn new(device: &Device, a: &CSR, name: &str, usage: BufferUsages) -> Self {
-        let row_pos = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some(format!("CSR Matrix {}.row_pos", name).as_str()),
-            contents: bytemuck::cast_slice(&a.row_pos),
-            usage: usage,
-        });
-        let col_pos = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some(format!("CSR Matrix {}.col_pos", name).as_str()),
-            contents: bytemuck::cast_slice(&a.col_pos),
-            usage: usage,
-        });
-        let values = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some(format!("CSR Matrix {}.values", name).as_str()),
-            contents: bytemuck::cast_slice(&a.values),
-            usage: usage,
-        });
-        let shape = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some(format!("CSR Matrix {}.shape", name).as_str()),
-            contents: bytemuck::cast_slice(&[a.shape.0, a.shape.1]),
-            usage: usage,
-        });
-    
-        CSRBuffer{row_pos, col_pos, values, shape}
-    }
-
-
-
-    fn new_input(device: &Device, a: &CSR, name: &str) -> Self {
-        let row_pos = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some(format!("CSR Matrix {}.row_pos", name).as_str()),
-            contents: bytemuck::cast_slice(&a.row_pos),
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-        });
-        let col_pos = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some(format!("CSR Matrix {}.col_pos", name).as_str()),
-            contents: bytemuck::cast_slice(&a.col_pos),
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-        });
-        let values = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some(format!("CSR Matrix {}.values", name).as_str()),
-            contents: bytemuck::cast_slice(&a.values),
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-        });
-        let shape = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some(format!("CSR Matrix {}.shape", name).as_str()),
-            contents: bytemuck::cast_slice(&[a.shape.0, a.shape.1]),
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-        });
-    
-        CSRBuffer{row_pos, col_pos, values, shape}
-
-    }
-
-
-    fn new_output(device: &Device, a: &CSR, nnz: usize, name: &str, usage: BufferUsages) -> Self {
-        // let size = (nnz * 4 * 2 + nnz + 2*4 ) as u64; 
-
-
-        let row_pos = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some(format!("CSR Matrix {}.row_pos", name).as_str()),
-            size: (nnz*4) as u64,
-            usage: usage,  // Add COPY_SRC
-            mapped_at_creation: false,
-        });
-        let col_pos = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some(format!("CSR Matrix {}.col_pos", name).as_str()),
-            size: (nnz*4) as u64,
-            usage: usage,  // Add COPY_SRC
-            mapped_at_creation: false,
-        });
-        let values = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some(format!("CSR Matrix {}.values", name).as_str()),
-            size: (nnz*4) as u64,
-            usage: usage,  // Add COPY_SRC
-            mapped_at_creation: false,
-        });
-        let shape = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some(format!("CSR Matrix {}.shape", name).as_str()),
-            size: (2*4) as u64,
-            usage: usage,  // Add COPY_SRC
-            mapped_at_creation: false,
-        });
-
-        CSRBuffer{row_pos, col_pos, values, shape}
-    }
-
-    fn gen_bind_group_entries(&self, offset: usize, mode: BufferIO) -> Vec<wgpu::BindGroupLayoutEntry> {
-        let mut entries = vec![];
-
-        for i in offset..(offset+4) {
-            entries.push(wgpu::BindGroupLayoutEntry {
-                binding: i as u32,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                // If input, read-only
-                ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: match mode { BufferIO::Input => true, BufferIO::Output => false} }, has_dynamic_offset: false, min_binding_size: None },
-                count: None,
-            });
-        }
-
-        entries
-    }
-
-
-    fn create_bind_group(&self, device: &Device, layout: &wgpu::BindGroupLayout) -> BindGroup {
-
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Bind Group"),
-            layout: layout,
-            entries: &[
-                wgpu::BindGroupEntry { binding: 0, resource: self.row_pos.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 1, resource: self.col_pos.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 2, resource: self.values.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 3, resource: self.shape.as_entire_binding() },
-            ],
-        });
-
-        bind_group
-    }
-
-
-    fn copy_b2b(&self, target: &CSRBuffer, n: usize, encoder: &mut CommandEncoder) {
-        encoder.copy_buffer_to_buffer(&self.row_pos, 0, &target.row_pos, 0, (n*4) as u64);
-        encoder.copy_buffer_to_buffer(&self.col_pos, 0, &target.col_pos, 0, (n*4) as u64);
-        encoder.copy_buffer_to_buffer(&self.values, 0, &target.values, 0, (n*4) as u64);
-        encoder.copy_buffer_to_buffer(&self.shape, 0, &target.shape, 0, (2*4) as u64);
-    }
-
-
-}
 
 
 fn size_prediction(A: &CSR, B: &CSR) -> usize {
@@ -293,15 +139,16 @@ async fn main() {
         compute_pass.set_bind_group(0, &bg_a, &[]);
         compute_pass.set_bind_group(1, &bg_b, &[]);
         compute_pass.set_bind_group(2, &bg_c, &[]);
-        compute_pass.dispatch_workgroups(8,8, 1); // Angepasste Dispatch-Parameter
+        compute_pass.dispatch_workgroups(18,1, 1); // Angepasste Dispatch-Parameter
     }
 
-    queue.submit(Some(encoder.finish()));
+    // queue.submit(Some(encoder.finish()));
 
 
-    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("Copy Encoder") });
+    // let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("Copy Encoder") });
+    // encoder.copy_buffer_to_buffer(&buffer_c.shape, 0, &buffer_c_staging.shape, 0, 8 as u64);
     // encoder.copy_buffer_to_buffer(&buffer_c, 0, &staging_buffer, 0, (size * size * std::mem::size_of::<f32>() as u32) as u64);
-    buffer_a.copy_b2b(&buffer_c_staging, nnz_pred, &mut encoder);
+    buffer_c.copy_b2b(&buffer_c_staging, nnz_pred, &mut encoder);
     queue.submit(Some(encoder.finish()));
 
     let buffer_slice = buffer_c_staging.shape.slice(..);
