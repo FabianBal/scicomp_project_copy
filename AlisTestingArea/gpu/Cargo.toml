@@ -16,21 +16,4 @@ wgpu = "24.0.0"
 #winit = "0.29"
 futures-intrusive = "0.5"
 
-[[bin]]
-name = "main"
-path = "src/main.rs"
 
-
-[[bin]]
-name = "sparse_dev"
-path = "src/sparse_dev.rs"
-
-
-[[bin]]
-name = "dense_dev"
-path = "src/dense_dev.rs"
-
-
-[[bin]]
-name = "fun_dev"
-path = "src/fun_dev.rs"
