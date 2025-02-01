@@ -22,11 +22,11 @@ fn main() {
     let matrix_paths = get_matrix_paths(folder_path);
     println!("Found {} matrices in '{}'", matrix_paths.len(), folder_path);
     
-    //start benchmarking
     // Print table header
     println!("{:<20} {:<20} {:<20} {:<20} {:<30} {:<20} {:<20}", 
-             "Matrix 1", "Matrix 2", "cpuDense (ns)", "cpuSparse (ns)", "cpuSparseParallel (ns)", "cuBLAS (ns)", "cuSPARSE (ns)");
-
+    "Matrix 1", "Matrix 2", "cpuDense (ns)", "cpuSparse (ns)", "cpuSparseParallel (ns)", "cuBLAS (ns)", "cuSPARSE (ns)");
+    
+    // Benchmark all possible combinations of matrices
     for matrix1_path in &matrix_paths {
         for matrix2_path in &matrix_paths {
             // Make sure that the matrices are compatible
@@ -54,11 +54,14 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
     let (matrix1_dense, matrix1_csr) = import_matrix(matrix1_path);
     let (matrix2_dense, matrix2_csr) = import_matrix(matrix2_path);
 
+    // save times for each library
     let mut times_cpu_dense = Vec::with_capacity(repeat_count);
     let mut times_cpu_sparse = Vec::with_capacity(repeat_count);
     let mut times_cpu_sparse_parallel = Vec::with_capacity(repeat_count);
     let mut times_cublas = Vec::with_capacity(repeat_count);
     let mut times_cusparse = Vec::with_capacity(repeat_count);
+
+    // run benchmark for each library
     for _ in 1..=repeat_count {
         let start = std::time::Instant::now();
         // matrix1_dense.multiply(&matrix2_dense);
@@ -77,16 +80,18 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         times_cpu_sparse.push(start.elapsed().as_nanos());
 
         let start = std::time::Instant::now();
-        cublas::multiply(&matrix1_dense, &matrix2_dense);
+        let cublasem = cublas::multiply(&matrix1_dense, &matrix2_dense);
         times_cublas.push(start.elapsed().as_nanos());
+        cublasem.unwrap().print();
         
         let start = std::time::Instant::now();
-        cusparse::multiply(&matrix1_csr, &matrix2_csr);
+        let cusparsem = cusparse::multiply(&matrix1_csr, &matrix2_csr);
         times_cusparse.push(start.elapsed().as_nanos());
+        cusparsem.unwrap().to_dense().print();
         
     }
     
-    // Calculate average time
+    // Calculate average times
     let times = vec![times_cpu_dense, times_cpu_sparse, times_cpu_sparse_parallel, times_cublas, times_cusparse];
     let avg_times: Vec<f64> = times.into_iter().map(|time| time.iter().sum::<u128>() as f64 / repeat_count as f64).collect();
     avg_times
