@@ -12,5 +12,5 @@ wgpu = "24.0.0"
 winit = "0.29"
 futures-intrusive = "0.5"
 
-
+[workspace]
 
