@@ -15,7 +15,7 @@ fn main() {
         repeat_count = args[1].parse().expect("Failed to parse repeat count");
     }
     if args.len() >= 3 {
-        folder_path = &args[1];
+        folder_path = &args[2];
     }
 
     // search matrices in the folder
