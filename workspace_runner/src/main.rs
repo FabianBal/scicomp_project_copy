@@ -27,8 +27,8 @@ fn main() {
     println!("{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
     "Matrix 1", "Matrix 2", "cuBlas (µs)", "cuSparse (µs)", "gpuDense (µs)", "gpuSparse (µs)", "Blas (µs)", "cpuDense (µs)", "cpuSparse (µs)", "cpuSparseParallel (µs)");
 
-    let mut buffer_table = String::from("Buffer Times:\n");
-    buffer_table += &format!("{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
+    let mut overhead_table = String::from("Overhead Times:\n");
+    overhead_table += &format!("{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
     "Matrix 1", "Matrix 2", "cuBlas (µs)", "cuSparse (µs)", "gpuDense (µs)", "gpuSparse (µs)", "Blas (µs)", "cpuDense (µs)", "cpuSparse (µs)", "cpuSparseParallel (µs)");
 
     let mut multiplication_table = String::from("Raw Multiplication Times:\n");
@@ -46,7 +46,7 @@ fn main() {
                 let avg_times = benchmark_matrix(matrix1_path, matrix2_path, repeat_count);
 
                 // generate table rows
-                buffer_table += &format!("\n{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
+                overhead_table += &format!("\n{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
                          matrix1_name, matrix2_name, avg_times[0].0, avg_times[1].0, avg_times[2].0, avg_times[3].0, avg_times[4].0, avg_times[5].0, avg_times[6].0, avg_times[7].0);
                 multiplication_table += &format!("\n{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
                          matrix1_name, matrix2_name, avg_times[0].1, avg_times[1].1, avg_times[2].1, avg_times[3].1, avg_times[4].1, avg_times[5].1, avg_times[6].1, avg_times[7].1);
@@ -55,22 +55,23 @@ fn main() {
             }
         }
     }
-    println!("\n\n{}\n\n{}", buffer_table, multiplication_table);
+    println!("\n\n{}\n\n{}", overhead_table, multiplication_table);
 }
 
-fn import_matrix(matrix_path: &Path) -> (Dense, CSR) {
+fn import_matrix(matrix_path: &Path) -> (Dense, CSR, COO) {
     let matrix_coo = COO::read_mtx(matrix_path, false).expect(format!("failed reading matrix at {}", matrix_path.display()).as_str());
     let matrix_dense = matrix_coo.to_dense();
     let matrix_csr = CSR::from_coo(matrix_coo);
-    (matrix_dense, matrix_csr)
+    let matrix_coo = COO::read_mtx(matrix_path, false).expect(format!("failed reading matrix at {}", matrix_path.display()).as_str());
+    (matrix_dense, matrix_csr, matrix_coo)
 }
 
 // Benchmark matrix multiplication
 fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usize) -> Vec<(u128, u128, u128)> {
-    let (matrix1_dense, matrix1_csr) = import_matrix(matrix1_path);
-    let (matrix2_dense, matrix2_csr) = import_matrix(matrix2_path);
+    let (matrix1_dense, matrix1_csr, matrix1_coo) = import_matrix(matrix1_path);
+    let (matrix2_dense, matrix2_csr, matrix2_coo) = import_matrix(matrix2_path);
 
-    // save times for each library in format (buffer_time, multiply_time, total_time)
+    // save times for each library in format (overhead_time, multiply_time, total_time)
     let mut times_cpu_dense = Vec::with_capacity(repeat_count);
     let mut times_cpu_sparse = Vec::with_capacity(repeat_count);
     let mut times_cpu_sparse_parallel = Vec::with_capacity(repeat_count);
@@ -108,9 +109,13 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
 
         //BLAS
         let start = std::time::Instant::now();
-        //ToDo: call Blas multiply
+        let a = blas_dense::BlasDense::from_coo(&matrix1_coo);
+        let b = blas_dense::BlasDense::from_coo(&matrix2_coo);
+        let start_raw_multiply = std::time::Instant::now();
+        let _matrix = a.prod(&b);
+        let time_raw_multiply = start_raw_multiply.elapsed().as_micros();
         let time_total = start.elapsed().as_micros();
-        times_blas.push((0, time_total - 0, time_total));
+        times_blas.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
 
         //CPU Dense
         let start = std::time::Instant::now();

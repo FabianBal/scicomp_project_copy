@@ -8,3 +8,4 @@ matrix_base = { path = "../matrix_base" }
 fakscpu = {path = "../cpu"}
 cublas = {path = "../cublas"}
 cusparse = {path = "../cusparse"}
+blas_dense = { path = "../blas" }
