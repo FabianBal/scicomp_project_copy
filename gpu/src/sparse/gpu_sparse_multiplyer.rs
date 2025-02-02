@@ -11,10 +11,10 @@ use crate::*;
 // }
 
 
-pub struct GPUSparseMultiplyer {
+pub struct GPUSparseMultiplyer<'a> {
     pub wgpu_task: WgpuTask,
-    pub a: CSR,
-    pub b: CSR,
+    pub a: &'a CSR,
+    pub b: &'a CSR,
     pub shader: ShaderModule,
     pub batch_size: usize,
     pub bind_groups: Option<(BindGroup, BindGroup, BindGroup)>,
@@ -28,8 +28,8 @@ pub struct GPUSparseMultiplyer {
 
 
 
-impl GPUSparseMultiplyer {
-    pub async fn new(a: CSR, b: CSR, batch_size: usize) -> Self {
+impl<'a> GPUSparseMultiplyer<'a> {
+    pub async fn new(a: &'a CSR, b: &'a CSR, batch_size: usize) -> Self {
         let wgpu_task = WgpuTask::new().await;
 
         let device = &wgpu_task.device;

@@ -2435,7 +2435,9 @@ dependencies = [
  "cublas",
  "cusparse",
  "fakscpu",
+ "gpu",
  "matrix_base",
+ "tokio",
 ]
 
 [[package]]

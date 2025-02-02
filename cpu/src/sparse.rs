@@ -1,6 +1,6 @@
 use std::sync::{Mutex, Arc};
 
-use rayon::{prelude::*, vec};
+use rayon::prelude::*;
 
 use matrix_base::{Dense, CSR, COO};
 
@@ -219,8 +219,8 @@ impl SparseProd for CSR {
         let m = self.shape.0;
         let n = other.shape.1;
 
-        let res_rows: Arc<Mutex<Vec<(usize, Vec<f64>)>>> = Arc::new(Mutex::new(vec![]));
-        let res_col_idxs: Arc<Mutex<Vec<(usize, Vec<usize>)>>> =  Arc::new(Mutex::new(vec![]));
+        let _res_rows: Arc<Mutex<Vec<(usize, Vec<f64>)>>> = Arc::new(Mutex::new(vec![]));
+        let _res_col_idxs: Arc<Mutex<Vec<(usize, Vec<usize>)>>> =  Arc::new(Mutex::new(vec![]));
 
         let res_data: Arc<Mutex<Vec<(usize, usize, f64)>>> = Arc::new(Mutex::new(vec![]));
 
@@ -280,7 +280,7 @@ impl SparseProd for CSR {
 
 
         // Consume Arc Mutex
-        let mut res_data = Arc::try_unwrap(res_data).unwrap().into_inner().unwrap();
+        let res_data = Arc::try_unwrap(res_data).unwrap().into_inner().unwrap();
 
         // let mut res_rows = Arc::try_unwrap(res_rows).unwrap().into_inner().unwrap();
         // let mut res_col_idxs = Arc::try_unwrap(res_col_idxs).unwrap().into_inner().unwrap();
