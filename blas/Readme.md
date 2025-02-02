@@ -3,6 +3,10 @@
 Crate to multiply two matrices given in COO format using the dgemm BLAS function
 
 ## How to use
+install libopenblas-dev
+```bash
+sudo apt-get install libopenblas-dev
+```
 
 ### Cargo.toml
 Under `[dependencies]`, add `blas_dense = { path = "../blas" }`.
