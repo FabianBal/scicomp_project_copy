@@ -13,7 +13,7 @@ const DATA_PATH: &str = "../matrix_instances";
 
 #[cfg(test)]
 fn cmp_float(x: f64, y: f64, eps: f64) -> bool {
-    x-y < eps
+    (x-y).abs() < eps
 }
 
 #[cfg(test)]
@@ -21,7 +21,8 @@ fn cmp_dense(A: &Dense, B: &Dense, eps: f64) -> bool {
     let mut res = true;
 
     for (x,y) in A.data.iter().zip(B.data.iter()) {
-       res = res &&  ( x-y < eps );
+        println!("AAA {} {} {}", x, y, x-y);
+       res = res &&  ( (x-y).abs() < eps );
     }
 
     res
@@ -84,6 +85,8 @@ fn test_product_csr() {
     let n = 9;    
 
     for k in 0..n {
+        println!("Testing k={}", k);
+        
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
         let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_B.mtx", k)));
@@ -118,7 +121,7 @@ fn test_product_csr_sparse() {
     let n = 9;    
 
     for k in 0..n {
-        println!("Testing n={}", n);
+        println!("Testing k={}", k);
 
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
         let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
@@ -152,7 +155,7 @@ fn test_product_csr_sparse_par() {
     let n = 9;    
 
     for k in 0..n {
-        println!("Testing n={}", n);
+        println!("Testing k={}", k);
 
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
         let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
@@ -187,7 +190,7 @@ fn test_product_csr_sparse_to_coo_par() {
     let n = 9;    
 
     for k in 0..n {
-        println!("Testing n={}", n);
+        println!("Testing k={}", k);
 
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
         let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
@@ -207,6 +210,7 @@ fn test_product_csr_sparse_to_coo_par() {
 
 
         assert!(cmp_dense(&C, &C_test, eps));
+        // assert!(false);
     }
     
     
