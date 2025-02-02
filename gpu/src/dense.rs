@@ -3,8 +3,56 @@ use futures_intrusive::channel::shared::oneshot_channel;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
+use matrix_base::Dense;
 
 
+pub fn multiply_for_benchmark(matrix1: &Dense, matrix2: &Dense) -> u128 {
+    let mut time_raw_multiply = 0;
+    // convert matrix struct Dense to used format
+    let matrix_a = &matrix1.data.iter().map(|value| *value as f32).collect::<Vec<f32>>();
+    let matrix_b = &matrix2.data.iter().map(|value| *value as f32).collect::<Vec<f32>>();
+    let row_size_a = matrix1.shape.0 as u32;
+    let row_size_b = matrix2.shape.0 as u32;
+    let col_size_a = matrix1.shape.1 as u32;
+    let col_size_b = matrix2.shape.1 as u32;
+    
+    let multiply_future = async {
+        // create WGPU-Instanz, Adapter und Device
+        let instance = wgpu::Instance::default();
+        let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
+        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default(), None).await.unwrap();
+        
+        // create Buffer
+        let (buffer_a, buffer_b, buffer_c, staging_buffer, matrix_a_size_buffer, matrix_b_size_buffer) = create_buffers(
+            &device,
+            &matrix_a,
+            &matrix_b,
+            row_size_a,
+            col_size_a,
+            row_size_b,
+            col_size_b,
+        );
+        
+        let start_raw_multiply = std::time::Instant::now();
+        // calculate matrix/matrix
+        let _result = compute_matrix(
+            &device,
+            &queue,
+            buffer_a,
+            buffer_b,
+            buffer_c,
+            staging_buffer,
+            matrix_a_size_buffer,
+            matrix_b_size_buffer,
+            row_size_a,
+            col_size_b,
+        ).await;
+        time_raw_multiply = start_raw_multiply.elapsed().as_micros();
+    };
+    tokio::runtime::Runtime::new().unwrap().block_on(multiply_future);
+    
+    time_raw_multiply
+}
 
 
 fn create_buffers(
