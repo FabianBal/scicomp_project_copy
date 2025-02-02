@@ -93,7 +93,8 @@ impl GPUSparseMultiplyer {
     }
 
 
-    pub async fn doit(&self) -> (usize, GlobDataEntry) {
+    // pub async fn doit(&self) -> (usize, GlobDataEntry) {
+    pub async fn doit(&self) -> COO {
         let msg = "No Bind group (layout) found";
 
         let device = &self.wgpu_task.device;
@@ -162,16 +163,21 @@ impl GPUSparseMultiplyer {
 
         let data_result_idx = result_buffer_idx.get_mapped_range();
         let result: &[u32] = bytemuck::cast_slice(&data_result_idx);
-        let n_c_data = result[0];
-        println!("Ergebnis-Matrix: {:?}", n_c_data);
+        let n_c_data = result[0] as usize -1;
+        // println!("Ergebnis-Matrix: {:?}", n_c_data);
 
 
         let data_result_idx = result_buffer_glob_data.get_mapped_range();
         let result: &[GlobDataEntry] = bytemuck::cast_slice(&data_result_idx);
 
-        let gd = result[0];
+        // let results = Vec::from(result);
+        // let gd = result[0];
 
-        (n_c_data as usize, gd)
+        let data_final: Vec<(usize, usize, f64)> = result[..n_c_data].into_iter().map(|entry| (entry.i as usize, entry.j as usize, entry.x as f64)).collect();
+
+        COO {data: data_final, shape: (self.a.shape.0, self.b.shape.1)}
+
+        // (n_c_data as usize, gd)
 
     }
 
