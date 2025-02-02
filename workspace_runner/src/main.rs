@@ -101,9 +101,21 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         times_gpu_dense.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
 
         //GPU Sparse
-        let start = std::time::Instant::now();
-        let (_matrix, time_raw_multiply) = (&matrix1_csr, 0);//ToDo: call GPU Sparse multiply
-        let time_total = start.elapsed().as_micros();
+        let batch_size = 18;//not sure about this value
+        let start_total = std::time::Instant::now();
+        let mut time_raw_multiply= 0;
+
+        //-----------------------------------------broken part without this it works xD
+        let multiply_future = async {
+            let mut gpusm = gpu::GPUSparseMultiplyer::new(&matrix1_csr, &matrix2_csr, batch_size).await;
+            gpusm.create_and_load_buffer();
+            let start_raw_multiply = std::time::Instant::now();
+            let _res = gpusm.doit().await;
+            time_raw_multiply = start_raw_multiply.elapsed().as_micros();
+        };
+        tokio::runtime::Runtime::new().unwrap().block_on(multiply_future);
+        //-----------------------------------------end broken part
+        let time_total = start_total.elapsed().as_micros();
         times_gpu_sparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
 
         //BLAS
