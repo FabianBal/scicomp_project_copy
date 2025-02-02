@@ -30,19 +30,19 @@ fn cmp_dense(A: &Dense, B: &Dense, eps: f64) -> bool {
 
 
 
-#[test]
-fn test_product_csr_sparse_to_coo_par() {
-    let eps = 1e-7;
+#[tokio::test]
+async fn test_wgpu_sparse() {
+    let eps = 1e-5;
 
 
-    let batch_size = 100;
+    let batch_size = 18;
 
     // Number of matrices to test
-    let n = 9;    
+    let n = 10;    
 
 
-    for k in 0..n {
-        println!("Testing n={}", n);
+    for k in 1..n {
+        println!("Testing k={}", k);
 
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
         let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
@@ -57,33 +57,15 @@ fn test_product_csr_sparse_to_coo_par() {
         
 
 
-        async {
-            let mut gpusm = GPUSparseMultiplyer::new(A, B, batch_size).await;
-            gpusm.create_and_load_buffer();
-            // let (n_c_data, gd) = gpusm.doit().await;
-            let res = gpusm.doit().await;
-            // gpusm.doit().await
-            let C_test =res.to_dense();
-
-            assert!(cmp_dense(&C, &C_test, eps));
-        };
-        
-        // let C_test = res.to_dense();
+        let mut gpusm = GPUSparseMultiplyer::new(A, B, batch_size).await;
+        gpusm.create_and_load_buffer();
+        let mut res = gpusm.doit().await;        
+        let C_test =res.to_dense();
 
 
-
-    // let c = COO::read_mtx(Path::new("../../matrix_instances/generated/case_0000_C.mtx"), true).expect("Failed reading matrix file.");
-    // let c = c.to_dense();
+        assert!(cmp_dense(&C, &C_test, eps));
 
 
-
-
-
-        // C.print();
-        // C_test.print();
-
-
-        
     }
 
 

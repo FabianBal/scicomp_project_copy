@@ -42,12 +42,19 @@ struct DataEntry {
 @group(2) @binding(3) var<storage, read_write> nz_row_marker: array<u32>;
 
 
-@compute @workgroup_size(18,1,1)
+
+// @compute @workgroup_size(50,50,20)
+@compute @workgroup_size(200,1,1)
 fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     let m = a_shape.x;
     let n = b_shape.y;
 
-    let i: u32 = id.x;
+    // let x = 50u;
+    // let y = 50u;
+    // let z = 20u;
+
+    // let i: u32 = id.z*x*y + id.x*y + id.y;
+    let i = id.x;
 
     // if i == 0 {
         // glob_data[i].i = b_row_pos[i];
@@ -86,7 +93,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
         let marker = nz_row_marker[i*n + k];
         // atomicAdd(&idx, 1u);
         if marker > 0{
-            let idx = atomicAdd(&idx, 1u) - 1;
+            let idx = atomicAdd(&idx, 1u);
             glob_data[idx].i = i;
             glob_data[idx].j = k;
             glob_data[idx].x = x;

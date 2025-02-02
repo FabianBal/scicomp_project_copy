@@ -163,8 +163,8 @@ impl GPUSparseMultiplyer {
 
         let data_result_idx = result_buffer_idx.get_mapped_range();
         let result: &[u32] = bytemuck::cast_slice(&data_result_idx);
-        let n_c_data = result[0] as usize -1;
-        // println!("Ergebnis-Matrix: {:?}", n_c_data);
+        let n_c_data = result[0] as usize ;
+        println!("Berechnete Einträge: {:?}", n_c_data);
 
 
         let data_result_idx = result_buffer_glob_data.get_mapped_range();

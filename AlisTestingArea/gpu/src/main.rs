@@ -23,26 +23,35 @@ async fn main() {
     let batch_size = 18;
 
 
-    let a = COO::read_mtx(Path::new("../../matrix_instances/generated/case_0000_A.mtx"), true).expect("Failed reading matrix file.");
+    let a = COO::read_mtx(Path::new("../../matrix_instances/generated/case_0001_A.mtx"), true).expect("Failed reading matrix file.");
     let a = CSR::from_coo(a); 
-    let b = COO::read_mtx(Path::new("../../matrix_instances/generated/case_0000_B.mtx"), true).expect("Failed reading matrix file.");
+    let b = COO::read_mtx(Path::new("../../matrix_instances/generated/case_0001_B.mtx"), true).expect("Failed reading matrix file.");
     let b = CSR::from_coo(b);
 
 
     let mut gpusm = GPUSparseMultiplyer::new(a, b, batch_size).await;
     gpusm.create_and_load_buffer();
     // let (n_c_data, gd) = gpusm.doit().await;
-    let res = gpusm.doit().await;
+    let mut res = gpusm.doit().await;
     // let res = res.to_dense();
+    res.sort_data();
 
 
 
-    let c = COO::read_mtx(Path::new("../../matrix_instances/generated/case_0000_C.mtx"), true).expect("Failed reading matrix file.");
+    let c = COO::read_mtx(Path::new("../../matrix_instances/generated/case_0001_C.mtx"), true).expect("Failed reading matrix file.");
+
+    println!("bbb {} {}", res.data.len(), c.data.len());
+
     let c = c.to_dense();
+    
     
     for (i,j,x) in res.data {
         // let gd = result[idx];
         println!("({},{}) = {} ({})", i,j,x, c.get(i as usize, j as usize));
+        if (x as f64 - c.get(i,j)).abs() > 1e-5 {
+            println!("AAAAA  ({},{}) = {} ({})", i,j,x, c.get(i as usize, j as usize));
+        }
+        
     }
 
 
