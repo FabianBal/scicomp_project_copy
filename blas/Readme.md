@@ -10,7 +10,7 @@ Under `[dependencies]`, add `blas_dense = { path = "../blas" }`.
 ### The library
 
 The library contains the struct `BlasDense` that stores the data and shape of a matrix.  
-**IMPORTANT NOTE:** other than in `Dense` the matrix is flattend in column-major order!! E.g. the matrix [[1,2],[3,4]] is stored as [1,3,2,4]  
+**IMPORTANT NOTE:** other than in `Dense` the matrix is flattened in **column-major order**!! E.g. the matrix [[1,2],[3,4]] is stored as [1,3,2,4]  
 Below a code example, which demonstrates the functionality of this crate
 
 ```rust
