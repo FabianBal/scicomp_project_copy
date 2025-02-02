@@ -1,9 +1,9 @@
 use bindgen;
 
 fn main() {
-    // Generate bindings to CUDA's C API because no cuSPARSE rust wrapper exists as in cuBLAS
     //adjust path to CUDA installation!
     let cuda_path = "/usr/local/cuda-12.8";
+    // Generate bindings to CUDA's C API because no cuSPARSE rust wrapper exists as in cuBLAS
     let bindings = bindgen::Builder::default()
         .header(format!("{}/include/cusparse.h", cuda_path))
         .blocklist_item("FP_NAN")
@@ -21,7 +21,7 @@ fn main() {
         .expect("Couldn't write bindings!");
 
     // Tell Cargo to rerun this script if the CUDA header changes
-    println!("cargo:rerun-if-changed=/usr/local/cuda-12.8/include/cusparse.h");
+    println!("cargo:rerun-if-changed={}/include/cusparse.h", cuda_path);
 
     // Tell Cargo to link to CUDA libraries
     println!("cargo:rustc-link-lib=cusparse"); // Link against cusparse
