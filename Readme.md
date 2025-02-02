@@ -3,6 +3,10 @@
 ## Running the Benchmark  
 
 Before starting, ensure that all paths in `./cusparse/build.rs` match your local CUDA installation.  
+Install `libopenblas-dev`
+```bash
+sudo apt-get install libopenblas-dev
+```
 
 ### Steps to Run:  
 
