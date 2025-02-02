@@ -24,16 +24,16 @@ fn main() {
     
     // Generate table headers
     println!("\nTotal Times:");
-    println!("{:<20} {:<20} {:<20} {:<20} {:<30} {:<20} {:<20}", 
-    "Matrix 1", "Matrix 2", "cpuDense (µs)", "cpuSparse (µs)", "cpuSparseParallel (µs)", "cuBLAS (µs)", "cuSPARSE (µs)");
+    println!("{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
+    "Matrix 1", "Matrix 2", "cuBlas (µs)", "cuSparse (µs)", "gpuDense (µs)", "gpuSparse (µs)", "Blas (µs)", "cpuDense (µs)", "cpuSparse (µs)", "cpuSparseParallel (µs)");
 
     let mut buffer_table = String::from("Buffer Times:\n");
-    buffer_table += &format!("{:<20} {:<20} {:<20} {:<20} {:<30} {:<20} {:<20}", 
-    "Matrix 1", "Matrix 2", "cpuDense (µs)", "cpuSparse (µs)", "cpuSparseParallel (µs)", "cuBLAS (µs)", "cuSPARSE (µs)");
+    buffer_table += &format!("{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
+    "Matrix 1", "Matrix 2", "cuBlas (µs)", "cuSparse (µs)", "gpuDense (µs)", "gpuSparse (µs)", "Blas (µs)", "cpuDense (µs)", "cpuSparse (µs)", "cpuSparseParallel (µs)");
 
     let mut multiplication_table = String::from("Raw Multiplication Times:\n");
-    multiplication_table += &format!("{:<20} {:<20} {:<20} {:<20} {:<30} {:<20} {:<20}", 
-    "Matrix 1", "Matrix 2", "cpuDense (µs)", "cpuSparse (µs)", "cpuSparseParallel (µs)", "cuBLAS (µs)", "cuSPARSE (µs)");
+    multiplication_table += &format!("{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
+    "Matrix 1", "Matrix 2", "cuBlas (µs)", "cuSparse (µs)", "gpuDense (µs)", "gpuSparse (µs)", "Blas (µs)", "cpuDense (µs)", "cpuSparse (µs)", "cpuSparseParallel (µs)");
     
     // Benchmark all possible combinations of matrices
     for matrix1_path in &matrix_paths {
@@ -46,12 +46,12 @@ fn main() {
                 let avg_times = benchmark_matrix(matrix1_path, matrix2_path, repeat_count);
 
                 // generate table rows
-                buffer_table += &format!("\n{:<20} {:<20} {:<20} {:<20} {:<30} {:<20} {:<20}", 
-                         matrix1_name, matrix2_name, avg_times[0].0, avg_times[1].0, avg_times[2].0, avg_times[3].0, avg_times[4].0);
-                multiplication_table += &format!("\n{:<20} {:<20} {:<20} {:<20} {:<30} {:<20} {:<20}", 
-                         matrix1_name, matrix2_name, avg_times[0].1, avg_times[1].1, avg_times[2].1, avg_times[3].1, avg_times[4].1);
-                println!("{:<20} {:<20} {:<20} {:<20} {:<30} {:<20} {:<20}", 
-                matrix1_name, matrix2_name, avg_times[0].2, avg_times[1].2, avg_times[2].2, avg_times[3].2, avg_times[4].2);
+                buffer_table += &format!("\n{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
+                         matrix1_name, matrix2_name, avg_times[0].0, avg_times[1].0, avg_times[2].0, avg_times[3].0, avg_times[4].0, avg_times[5].0, avg_times[6].0, avg_times[7].0);
+                multiplication_table += &format!("\n{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
+                         matrix1_name, matrix2_name, avg_times[0].1, avg_times[1].1, avg_times[2].1, avg_times[3].1, avg_times[4].1, avg_times[5].1, avg_times[6].1, avg_times[7].1);
+                println!("{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25}", 
+                matrix1_name, matrix2_name, avg_times[0].2, avg_times[1].2, avg_times[2].2, avg_times[3].2, avg_times[4].2, avg_times[5].2, avg_times[6].2, avg_times[7].2);
             }
         }
     }
@@ -66,7 +66,7 @@ fn import_matrix(matrix_path: &Path) -> (Dense, CSR) {
 }
 
 // Benchmark matrix multiplication
-fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usize) -> Vec<(f64, f64, f64)> {
+fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usize) -> Vec<(u128, u128, u128)> {
     let (matrix1_dense, matrix1_csr) = import_matrix(matrix1_path);
     let (matrix2_dense, matrix2_csr) = import_matrix(matrix2_path);
 
@@ -76,42 +76,65 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
     let mut times_cpu_sparse_parallel = Vec::with_capacity(repeat_count);
     let mut times_cublas = Vec::with_capacity(repeat_count);
     let mut times_cusparse = Vec::with_capacity(repeat_count);
+    let mut times_gpu_dense = Vec::with_capacity(repeat_count);
+    let mut times_gpu_sparse = Vec::with_capacity(repeat_count);
+    let mut times_blas = Vec::with_capacity(repeat_count);
 
     // run benchmark for each library
     for _ in 1..=repeat_count {
+        //cuBLAS
+        let start = std::time::Instant::now();
+        let (_matrix, time_raw_multiply) = cublas::multiply(&matrix1_dense, &matrix2_dense).unwrap();
+        let time_total = start.elapsed().as_micros();
+        times_cublas.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
+        
+        //cuSPARSE
+        let start = std::time::Instant::now();
+        let (_matrix, time_raw_multiply) = cusparse::multiply(&matrix1_csr, &matrix2_csr).unwrap();
+        let time_total = start.elapsed().as_micros();
+        times_cusparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
+
+        //GPU Dense
+        let start = std::time::Instant::now();
+        let (_matrix, time_raw_multiply) = (&matrix1_dense, 0);//ToDo: call GPU Dense multiply
+        let time_total = start.elapsed().as_micros();
+        times_gpu_dense.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
+
+        //GPU Sparse
+        let start = std::time::Instant::now();
+        let (_matrix, time_raw_multiply) = (&matrix1_csr, 0);//ToDo: call GPU Sparse multiply
+        let time_total = start.elapsed().as_micros();
+        times_gpu_sparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
+
+        //BLAS
+        let start = std::time::Instant::now();
+        //ToDo: call Blas multiply
+        let time_total = start.elapsed().as_micros();
+        times_blas.push((0, time_total - 0, time_total));
+
+        //CPU Dense
         let start = std::time::Instant::now();
         // matrix1_dense.multiply(&matrix2_dense);
-        let time = start.elapsed().as_micros();
-        times_cpu_dense.push((0, time, time));
+        let time_total = start.elapsed().as_micros();
+        times_cpu_dense.push((0, time_total - 0, time_total));
 
+        //CPU Sparse
         let start = std::time::Instant::now();
         matrix1_csr.product_sparse(&matrix2_csr);
-        let time = start.elapsed().as_micros();
-        times_cpu_sparse.push((0, time, time));
+        let time_total = start.elapsed().as_micros();
+        times_cpu_sparse.push((0, time_total - 0, time_total));
 
+        //CPU Sparse Parallel
         let start = std::time::Instant::now();
         matrix1_csr.product_sparse_par(&matrix2_csr);
-        let time = start.elapsed().as_micros();
-        times_cpu_sparse_parallel.push((0, time, time));
-
-        let start = std::time::Instant::now();
-        let _ = cublas::multiply(&matrix1_dense, &matrix2_dense);
-        let time_buffer = 0;//ToDo: get buffer time
-        let time_multiply = start.elapsed().as_micros();
-        times_cublas.push((time_buffer, time_multiply, time_buffer + time_multiply));
-        
-        let start = std::time::Instant::now();
-        let _ = cusparse::multiply(&matrix1_csr, &matrix2_csr);
-        let time_buffer = 0;//ToDo: get buffer time
-        let time_multiply = start.elapsed().as_micros();
-        times_cusparse.push((time_buffer, time_multiply, time_buffer + time_multiply));
-        
+        let time_total = start.elapsed().as_micros();
+        times_cpu_sparse_parallel.push((0, time_total - 0, time_total));        
     }
     
     // Calculate average times
-    let times_vec = vec![times_cpu_dense, times_cpu_sparse, times_cpu_sparse_parallel, times_cublas, times_cusparse];
+    let times_vec = vec![times_cublas, times_cusparse, times_gpu_dense, times_gpu_sparse, times_blas, times_cpu_dense, times_cpu_sparse, times_cpu_sparse_parallel];
     let sum_times: Vec<(u128, u128, u128)> = times_vec.into_iter().map(|times| times.iter().fold((0, 0, 0), |acc, time| (acc.0 + time.0, acc.1 + time.1, acc.2 + time.2))).collect();
-    let avg_times = sum_times.iter().map(|sum_time| (sum_time.0 as f64 / repeat_count as f64, sum_time.1 as f64 / repeat_count as f64, sum_time.2 as f64 / repeat_count as f64)).collect();
+    let avg_times = sum_times.iter().map(|sum_time| (sum_time.0 / repeat_count as u128, sum_time.1 / repeat_count as u128, sum_time.2 / repeat_count as u128)).collect();
     avg_times
 }
 

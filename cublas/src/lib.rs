@@ -4,7 +4,8 @@ use cust::error::CudaResult;
 use std::ptr;
 use cublas_sys::{cublasCreate_v2, cublasDestroy_v2, cublasSgemm_v2, cublasHandle_t};
 
-pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<Dense> {
+pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<(Dense, u128)> {
+    let time_raw_multiply: u128;
     // Ensure the matrices can be multiplied
     assert_eq!(matrix1.shape.1, matrix2.shape.0);
 
@@ -34,6 +35,7 @@ pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<Dense> {
 
     // Perform matrix multiplication: C = alpha * A * B + beta * C
     unsafe {
+        let start = std::time::Instant::now();
         cublasSgemm_v2(
             handle,
             cublas_sys::cublasOperation_t::CUBLAS_OP_N, // No transpose A
@@ -45,6 +47,7 @@ pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<Dense> {
             &beta, 
             d_c.as_device_ptr().as_mut_ptr(), m,
         );
+        time_raw_multiply = start.elapsed().as_micros();
     }
 
     // Copy result back to host
@@ -60,5 +63,5 @@ pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<Dense> {
         shape: (matrix1.shape.0, matrix2.shape.1),
     };
 
-    Ok(result)
+    Ok((result, time_raw_multiply))
 }

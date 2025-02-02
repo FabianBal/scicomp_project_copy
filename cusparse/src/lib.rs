@@ -11,7 +11,8 @@ use bindings::*;
 /// Multiply two CSR matrices using cuSPARSE
 /// helpful: https://github.com/NVIDIA/CUDALibrarySamples/blob/master/cuSPARSE/spgemm/spgemm_example.c
 
-pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<CSR> {
+pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<(CSR, u128)> {
+    let time_raw_multiply: u128;
     // Ensure the matrices can be multiplied
     assert_eq!(matrix1.shape.1, matrix2.shape.0);
 
@@ -171,6 +172,7 @@ pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<CSR> {
         // Allocate buffer for SpGEMM compute
         d_buffer2 = DeviceBuffer::zeroed(buffer_size2)?;
 
+        let start = std::time::Instant::now();
         // computes the structure of the output matrix and its values. It stores the matrix in temporary buffers
         cusparseSpGEMM_compute(
             cusparse_handle,
@@ -187,6 +189,7 @@ pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<CSR> {
             &mut buffer_size2,
             d_buffer2.as_device_ptr().as_mut_ptr() as *mut c_void,
         );
+        time_raw_multiply = start.elapsed().as_micros();
 
         // Get the size of the result matrix
         cusparseSpMatGetSize(sparse_result, &mut rows_result, &mut cols_result, &mut nnz_result);
@@ -234,10 +237,10 @@ pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<CSR> {
     }
     
     // Return the result matrix in CSR format
-    Ok(CSR {
+    Ok((CSR {
         row_pos: h_result_row_ptr.into_iter().map(|x| x as usize).chain(std::iter::once(nnz_result as usize)).collect(),
         col_pos: h_result_col_ind.into_iter().map(|x| x as usize).collect(),
         values: h_result_values.iter().map(|&x| x as f64).collect(),
         shape: (rows1 as usize, cols2 as usize),
-    })
+    }, time_raw_multiply))
 }
