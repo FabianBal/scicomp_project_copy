@@ -46,9 +46,9 @@ fn main() {
                 let avg_times = benchmark_matrix(matrix1_path, matrix2_path, repeat_count);
 
                 // generate table rows
-                overhead_table += &format!("\n{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25} {:<25}", 
-                         matrix1_name, matrix2_name, avg_times[0].0, avg_times[1].0, avg_times[2].0, avg_times[3].0, avg_times[4].0, avg_times[5].0, avg_times[6].0, avg_times[7].0);
                 multiplication_table += &format!("\n{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25} {:<25}", 
+                         matrix1_name, matrix2_name, avg_times[0].0, avg_times[1].0, avg_times[2].0, avg_times[3].0, avg_times[4].0, avg_times[5].0, avg_times[6].0, avg_times[7].0);
+                overhead_table += &format!("\n{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25} {:<25}", 
                          matrix1_name, matrix2_name, avg_times[0].1, avg_times[1].1, avg_times[2].1, avg_times[3].1, avg_times[4].1, avg_times[5].1, avg_times[6].1, avg_times[7].1);
                 println!("{:<20} {:<20} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<25} {:<25}", 
                 matrix1_name, matrix2_name, avg_times[0].2, avg_times[1].2, avg_times[2].2, avg_times[3].2, avg_times[4].2, avg_times[5].2, avg_times[6].2, avg_times[7].2);
