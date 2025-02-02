@@ -41,28 +41,34 @@ async fn main() {
     let c = COO::read_mtx(Path::new("matrix_instances/generated/case_0000_C.mtx"), true).expect("Failed reading matrix file.");
 
     println!("bbb {} {}", res.data.len(), c.data.len());
+    println!("ccc {:?} {:?}", res.shape, c.shape);
 
     let c = c.to_dense();
+
+    // for (c1, c2) in c.data.iter().enumerate() {
+
     
     
-    // for (i,j,x) in res.data {
-    //     // let gd = result[idx];
-    //     // println!("({},{}) = {} ({})", i,j,x, c.get(i as usize, j as usize));
-    //     if (x as f64 - c.get(i,j)).abs() > 1e-5 {
-    //         println!("AAAAA  ({},{}) = {} ({})", i,j,x, c.get(i as usize, j as usize));
-    //     }
-        
-    // }
-
-    let res = res.to_dense();
-    for i in 0..c.shape.0 {
-        for j in 0..c.shape.1 {
-            if  (res.get(i,j) - c.get(i, j)).abs() > 1e-5 {
-
-                println!("UAU ({} {}): {} {}", i,j, res.get(i,j), c.get(i, j));
-            }
+    for (i,j,x) in res.data {
+        // let gd = result[idx];
+        // println!("({},{}) = {} ({})", i,j,x, c.get(i as usize, j as usize));
+        if (x as f64 - c.get(i,j)).abs() > 1e-5 {
+            println!("AAAAA  ({},{}) = {} ({})", i,j,x, c.get(i as usize, j as usize));
         }
+        
     }
+
+
+
+    // let res = res.to_dense();
+    // for i in 0..c.shape.0 {
+    //     for j in 0..c.shape.1 {
+    //         if  (res.get(i,j) - c.get(i, j)).abs() > 1e-5 {
+
+    //             println!("UAU ({} {}): {} {}", i,j, res.get(i,j), c.get(i, j));
+    //         }
+    //     }
+    // }
 
 
 

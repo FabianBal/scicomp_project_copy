@@ -40,6 +40,9 @@ impl GPUSparseMultiplyer {
         // Load Shader
         let n_disps = (a.shape.0 as f64 / 5.).ceil() as usize;
 
+        // let n_disps = 2;
+
+
         println!("n_disps {}" , n_disps);
 
         let mut shader_code = match std::fs::read_to_string("gpu/shader/sparse_mul.wgsl") {
@@ -50,6 +53,12 @@ impl GPUSparseMultiplyer {
         };
 
         shader_code = shader_code.replace("HIERDIENUMMER", n_disps.to_string().as_str());
+        shader_code = shader_code.replace("HIERDIESPALTEN", b.shape.1.to_string().as_str());
+
+
+
+        // println!("*****\n{}\n******", shader_code);
+
 
         // let shader_code = std::fs::read_to_string("shader/sparse_mul.wgsl").expect("Shader file not found.");
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -154,8 +163,8 @@ impl GPUSparseMultiplyer {
             compute_pass.set_bind_group(0, &self.bind_groups.as_ref().expect(msg).0, &[]);
             compute_pass.set_bind_group(1, &self.bind_groups.as_ref().expect(msg).1, &[]);
             compute_pass.set_bind_group(2, &self.bind_groups.as_ref().expect(msg).2, &[]);
-            // compute_pass.dispatch_workgroups(self.n_disps as u32,1,1); // Angepasste Dispatch-Parameter
-            compute_pass.dispatch_workgroups(1,1,1); // Angepasste Dispatch-Parameter
+            compute_pass.dispatch_workgroups(self.n_disps as u32,1,1); // Angepasste Dispatch-Parameter
+            // compute_pass.dispatch_workgroups(1,1,1); // Angepasste Dispatch-Parameter
         }
 
         let nnz_pred = size_prediction(&self.a, &self.b);
@@ -195,10 +204,19 @@ impl GPUSparseMultiplyer {
         let data_result_idx = result_buffer_glob_data.get_mapped_range();
         let result: &[GlobDataEntry] = bytemuck::cast_slice(&data_result_idx);
 
+
+
+        
+
         // let results = Vec::from(result);
         // let gd = result[0];
 
         let data_final: Vec<(usize, usize, f64)> = result[..n_c_data].into_iter().map(|entry| (entry.i as usize, entry.j as usize, entry.x as f64)).collect();
+        
+        
+        
+        // let data_final: Vec<(usize, usize, f64)> = result[..].into_iter().map(|entry| (entry.i as usize, entry.j as usize, entry.x as f64)).collect();
+        // println!("DEB {:?}", data_final);
 
         COO {data: data_final, shape: (self.a.shape.0, self.b.shape.1)}
 
