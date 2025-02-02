@@ -1,8 +1,8 @@
 use std::sync::{Mutex, Arc};
 
-use rayon::prelude::*;
+use rayon::{prelude::*, vec};
 
-use matrix_base::{Dense, CSR};
+use matrix_base::{Dense, CSR, COO};
 
 
 
@@ -11,6 +11,7 @@ pub trait SparseProd {
     fn product(&self, other: &CSR) -> Dense;
     fn product_sparse(&self, other: &CSR) -> CSR;
     fn product_sparse_par(&self, other: &CSR) -> CSR;
+    fn product_sparse_to_coo_par(&self, other: &CSR) -> COO;
 }
 
 
@@ -212,5 +213,99 @@ impl SparseProd for CSR {
 
     }
 
+
+
+    fn product_sparse_to_coo_par(&self, other: &CSR) -> COO {
+        let m = self.shape.0;
+        let n = other.shape.1;
+
+        let res_rows: Arc<Mutex<Vec<(usize, Vec<f64>)>>> = Arc::new(Mutex::new(vec![]));
+        let res_col_idxs: Arc<Mutex<Vec<(usize, Vec<usize>)>>> =  Arc::new(Mutex::new(vec![]));
+
+        let res_data: Arc<Mutex<Vec<(usize, usize, f64)>>> = Arc::new(Mutex::new(vec![]));
+
+        (0..m).into_par_iter()
+        .for_each(|i| {
+            // Iterate over all non-zero cols of A_{i*}
+
+            // Create a dense row for the result matrix, C_{i*}
+            // and also a bool array that flags if some non-zero
+            // entry for the k-th (i.e. for C_{ik}) is calculated.            
+            let mut nz_row_marker = vec![false;n];
+            let mut res_curr_row = vec![0.;n];
+
+            for col_pos_pos in self.row_pos[i]..self.row_pos[i+1] {
+                let k = self.col_pos[col_pos_pos];
+
+                for other_col_pos_pos in other.row_pos[k]..other.row_pos[k+1] {
+                    let j = other.col_pos[other_col_pos_pos];
+
+
+
+                    // C_{i*} = \sum_{k \in I_i (A)} a_{ik} b_{i*}
+                    // a_{ik} = self.values[col_pos_pos]
+                    // b_{kj} = other.values[other_col_pos_pos]
+                    // mat[i][j] += self.values[col_pos_pos] * other.values[other_col_pos_pos]
+                    // mat.set(i,j , mat.get(i, j) +   self.values[col_pos_pos] * other.values[other_col_pos_pos]);
+                    res_curr_row[j] += self.values[col_pos_pos] * other.values[other_col_pos_pos];
+                    nz_row_marker[j] = true;                    
+
+                }
+            }
+
+            // Go through the row, which may contain 0 entries.
+            // If !marker, then the k-col is 0 and can be ignored
+            // Save only non-zero entries and their index
+            // let mut res_curr_row_final_val = vec![];
+            // let mut res_curr_row_final_col_idx = vec![];
+            let mut data_thread: Vec<(usize, usize, f64)> = vec![];
+            for ((k, x), marker) in res_curr_row.iter().enumerate().into_iter().zip(nz_row_marker) {
+                if marker {
+                    // res_curr_row_final_val.push(*x);
+                    // res_curr_row_final_col_idx.push(k);
+                    data_thread.push((i, k, *x));
+                }
+            }
+            
+            let mut rd = res_data.lock().unwrap();
+            rd.append(&mut data_thread);
+
+            // Push the final result for the current row
+            // let mut rr = res_rows.lock().unwrap();
+            // let mut rci = res_col_idxs.lock().unwrap();
+
+            // rr.push((i,res_curr_row_final_val));
+            // rci.push((i,res_curr_row_final_col_idx));        
+        });
+
+
+        // Consume Arc Mutex
+        let mut res_data = Arc::try_unwrap(res_data).unwrap().into_inner().unwrap();
+
+        // let mut res_rows = Arc::try_unwrap(res_rows).unwrap().into_inner().unwrap();
+        // let mut res_col_idxs = Arc::try_unwrap(res_col_idxs).unwrap().into_inner().unwrap();
+
+        // res_rows.sort_by_key(|&(i, _)| i);
+        // res_col_idxs.sort_by_key(|&(i, _)| i);
+
+        // Create the row_pos vector and flatten the other
+        // let mut row_pos_counter = 0;
+        // let mut row_pos = vec![0];
+
+        // for (_, c) in &res_col_idxs {
+        //     row_pos_counter += c.len();
+        //     row_pos.push(row_pos_counter);
+        // }
+
+        // let col_pos = res_col_idxs.into_iter().flat_map(|(_, inner_vec)| inner_vec).collect();
+        // let values: Vec<_> = res_rows.into_iter().flat_map(|(_, inner_vec)| inner_vec).collect();
+
+        // row_pos.push(values.len());
+
+        // CSR{row_pos, col_pos, values, shape: (m,n)};
+
+        COO{data: res_data, shape: (m,n)}
+
+    }
 
 }
