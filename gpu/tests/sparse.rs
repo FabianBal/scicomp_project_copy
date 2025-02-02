@@ -35,7 +35,7 @@ async fn test_wgpu_sparse() {
     let eps = 1e-5;
 
 
-    let batch_size = 18;
+    let batch_size = 4;
 
     // Number of matrices to test
     let n = 10;    

@@ -20,7 +20,7 @@ use matrix_base::{COO, CSR};
 
 #[tokio::main]
 async fn main() {
-    let batch_size = 18;
+    let batch_size = 6;
 
 
     let a = COO::read_mtx(Path::new("matrix_instances/generated/case_0000_A.mtx"), true).expect("Failed reading matrix file.");

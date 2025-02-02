@@ -17,12 +17,10 @@ struct DataEntry {
 
 @group(2) @binding(0) var<storage, read_write> idx: atomic<u32>;
 @group(2) @binding(1) var<storage, read_write> glob_data: array<DataEntry>;
-@group(2) @binding(2) var<storage, read_write> res_curr_roww: array<f32>;
-@group(2) @binding(3) var<storage, read_write> nz_row_markerr: array<u32>;
 
 
-// var<workgroup> res_curr_row: array<f32, HIERDIESPALTEN*5>;
-// var<workgroup> nz_row_marker: array<u32, HIERDIESPALTEN*5>;
+// For algorithm see CPU sparse implementation
+
 
 @compute @workgroup_size(HIERWGANZ,1,1)
 fn main(@builtin(local_invocation_id) id: vec3<u32>, @builtin(workgroup_id) wid: vec3<u32>) {
@@ -30,43 +28,13 @@ fn main(@builtin(local_invocation_id) id: vec3<u32>, @builtin(workgroup_id) wid:
     let n = b_shape.y;
 
 
-    // var res_curr_row: array<f32, HIERDIESPALTEN>;
-    // if (id.x == 0u) {
-    //     // Initialize the array to zeros
-    //     for (var i = 0u; i < HIERDIESPALTEN; i++) {
-    //         res_curr_row[i] = 0.0;
-    //     }
-    // }
-
-
     var res_curr_row: array<f32, HIERDIESPALTEN> = array<f32, HIERDIESPALTEN>();
     var nz_row_marker: array<u32, HIERDIESPALTEN> = array<u32, HIERDIESPALTEN>();     
 
-    // for (var i = 0u; i < HIERDIESPALTEN; i++) {
-    //     res_curr_row[i] = 0.0;
-    //     nz_row_marker[i] = 0u;
-    // }
 
-
-
-    // let wg_disp_n = HIERDIENUMMERu;
     let i = id.x + wid.x * HIERWGANZu;
-    // let i = id.x;
-
-
-    // if i < 18{
-
-
-    //     let iii = atomicAdd(&idx, 1u);
-    //     if id.x == 2 {
-    //         glob_data[0].i = 69;    
-    //     }
-    //     glob_data[i].i = iii;
-    // }
-
 
     
-    // if i < 18{
         for (var col_pos_pos = a_row_pos[i]; col_pos_pos < a_row_pos[i+1]; col_pos_pos++) {
             let k = a_col_pos[col_pos_pos];
 
@@ -95,6 +63,5 @@ fn main(@builtin(local_invocation_id) id: vec3<u32>, @builtin(workgroup_id) wid:
                 glob_data[write_idx].x = x;
             }
         }
-    // }
 }
 

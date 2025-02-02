@@ -84,8 +84,8 @@ impl GPUSparseMultiplyer {
 
         
 
-        let buffer_res = ResultBuffer::new(&device, nnz_pred, self.b.shape.1, self.batch_size, "C", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC);
-        let buffer_res_staging = ResultBuffer::new(&device, nnz_pred, self.b.shape.1, self.batch_size, "C", wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST);
+        let buffer_res = ResultBuffer::new(&device, nnz_pred, self.b.shape.1,  "C", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC);
+        let buffer_res_staging = ResultBuffer::new(&device, nnz_pred, self.b.shape.1,  "C", wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST);
 
 
 
@@ -171,7 +171,7 @@ impl GPUSparseMultiplyer {
 
         let buffer_res_staging = self.buffer_res_staging.as_ref().expect(msg);
 
-        self.buffer_res.as_ref().expect(msg).copy_b2b(&buffer_res_staging, nnz_pred, self.b.shape.1, self.batch_size,&mut encoder);
+        self.buffer_res.as_ref().expect(msg).copy_b2b(&buffer_res_staging, nnz_pred, self.b.shape.1, &mut encoder);
         self.wgpu_task.queue.submit(Some(encoder.finish()));
 
         let result_buffer_idx = buffer_res_staging.idx.slice(..);
