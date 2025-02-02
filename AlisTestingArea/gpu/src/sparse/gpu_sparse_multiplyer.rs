@@ -1,10 +1,15 @@
 
 
-use std::os::unix::raw::dev_t;
+use std::{cmp::min, os::unix::raw::dev_t};
 
 use wgpu::{BindGroup, BindGroupLayout, ShaderModel, ShaderModule};
 
 use crate::*;
+
+// pub struct ShaderParam {
+//     pub wg_disp_n: u32 // How many workgroups are dispatched?
+// }
+
 
 pub struct GPUSparseMultiplyer {
     pub wgpu_task: WgpuTask,
@@ -15,7 +20,9 @@ pub struct GPUSparseMultiplyer {
     pub bind_groups: Option<(BindGroup, BindGroup, BindGroup)>,
     pub bind_group_layouts: Option<(BindGroupLayout, BindGroupLayout, BindGroupLayout)>,
     pub buffer_res: Option<ResultBuffer>,
-    pub buffer_res_staging: Option<ResultBuffer>
+    pub buffer_res_staging: Option<ResultBuffer>,
+    pub nnz_pred: usize,
+    pub n_disps: usize
 
 }
 
@@ -27,9 +34,18 @@ impl GPUSparseMultiplyer {
 
         let device = &wgpu_task.device;
 
-        // Load Shader
+        let nnz_pred = size_prediction(&a, &b);
+        
 
-        let shader_code = std::fs::read_to_string("shader/sparse_mul.wgsl").expect("Shader file not found.");
+        // Load Shader
+        let n_disps = (a.shape.0 as f64 / 5.).ceil() as usize;
+
+        println!("n_disps {}" , n_disps);
+
+        let mut shader_code = std::fs::read_to_string("shader/sparse_mul.wgsl").expect("Shader file not found.");
+        shader_code = shader_code.replace("HIERDIENUMMER", n_disps.to_string().as_str());
+
+        // let shader_code = std::fs::read_to_string("shader/sparse_mul.wgsl").expect("Shader file not found.");
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Sparse Matrix Multiplication Shader"),
             source: wgpu::ShaderSource::Wgsl(shader_code.into()),
@@ -38,19 +54,20 @@ impl GPUSparseMultiplyer {
 
 
         
-        GPUSparseMultiplyer{wgpu_task, a, b, shader, batch_size, bind_groups: None, bind_group_layouts: None, buffer_res: None, buffer_res_staging: None}
+        GPUSparseMultiplyer{wgpu_task, a, b, shader, batch_size, bind_groups: None, bind_group_layouts: None, buffer_res: None, buffer_res_staging: None, nnz_pred, n_disps}
     }
 
 
     pub fn create_and_load_buffer(&mut self) {
         let device = &self.wgpu_task.device;
+        let nnz_pred = self.nnz_pred;
 
         // Create Buffer for CSR Matrix Data 
 
         let buffer_a = CSRBuffer::new(&device, &self.a, "A", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC);
         let buffer_b = CSRBuffer::new(&device, &self.b, "B", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC);
 
-        let nnz_pred = size_prediction(&self.a, &self.b);
+        
 
         let buffer_res = ResultBuffer::new(&device, nnz_pred, self.b.shape.1, self.batch_size, "C", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC);
         let buffer_res_staging = ResultBuffer::new(&device, nnz_pred, self.b.shape.1, self.batch_size, "C", wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST);
@@ -131,7 +148,8 @@ impl GPUSparseMultiplyer {
             compute_pass.set_bind_group(0, &self.bind_groups.as_ref().expect(msg).0, &[]);
             compute_pass.set_bind_group(1, &self.bind_groups.as_ref().expect(msg).1, &[]);
             compute_pass.set_bind_group(2, &self.bind_groups.as_ref().expect(msg).2, &[]);
-            compute_pass.dispatch_workgroups(1,1, 1); // Angepasste Dispatch-Parameter
+            // compute_pass.dispatch_workgroups(self.n_disps as u32,1,1); // Angepasste Dispatch-Parameter
+            compute_pass.dispatch_workgroups(1,1,1); // Angepasste Dispatch-Parameter
         }
 
         let nnz_pred = size_prediction(&self.a, &self.b);
@@ -165,6 +183,7 @@ impl GPUSparseMultiplyer {
         let result: &[u32] = bytemuck::cast_slice(&data_result_idx);
         let n_c_data = result[0] as usize ;
         println!("Berechnete Einträge: {:?}", n_c_data);
+        let n_c_data = min(n_c_data, self.nnz_pred);
 
 
         let data_result_idx = result_buffer_glob_data.get_mapped_range();
