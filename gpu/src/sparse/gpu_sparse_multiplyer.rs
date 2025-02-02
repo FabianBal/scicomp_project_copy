@@ -40,7 +40,7 @@ impl GPUSparseMultiplyer {
         // Load Shader
         let n_disps = (a.shape.0 as f64 / 5.).ceil() as usize;
 
-        // let n_disps = 2;
+        // let n_disps = 1;
 
 
         println!("n_disps {}" , n_disps);
@@ -52,7 +52,7 @@ impl GPUSparseMultiplyer {
             }
         };
 
-        shader_code = shader_code.replace("HIERDIENUMMER", n_disps.to_string().as_str());
+        shader_code = shader_code.replace("HIERWGANZ", 5.to_string().as_str());
         shader_code = shader_code.replace("HIERDIESPALTEN", b.shape.1.to_string().as_str());
 
 

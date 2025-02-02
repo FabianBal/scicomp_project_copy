@@ -14,7 +14,7 @@ const DATA_PATH: &str = "../matrix_instances";
 
 #[cfg(test)]
 fn cmp_float(x: f64, y: f64, eps: f64) -> bool {
-    x-y < eps
+    (x-y).abs() < eps
 }
 
 #[cfg(test)]
@@ -22,7 +22,7 @@ fn cmp_dense(A: &Dense, B: &Dense, eps: f64) -> bool {
     let mut res = true;
 
     for (x,y) in A.data.iter().zip(B.data.iter()) {
-       res = res &&  ( x-y < eps );
+       res = res &&  ( (x-y).abs() < eps );
     }
 
     res
