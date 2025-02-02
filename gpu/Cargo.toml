@@ -21,7 +21,7 @@ path = "src/main.rs"
 
 [[bin]]
 name = "sparse_dev"
-path = "src/sparse_dev.rs"
+path = "src/main_sparse.rs"
 
 
 [[bin]]
