@@ -136,19 +136,19 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let start = std::time::Instant::now();
         matrix1_csr.product_sparse(&matrix2_csr);
         let time_total = start.elapsed().as_micros();
-        times_cpu_sparse.push((0, time_total - 0, time_total));
+        times_cpu_sparse.push((time_total - 0, 0, time_total));
         
         //CPU Sparse Parallel
         let start = std::time::Instant::now();
         matrix1_csr.product_sparse_par(&matrix2_csr);
         let time_total = start.elapsed().as_micros();
-        times_cpu_sparse_parallel.push((0, time_total - 0, time_total));        
+        times_cpu_sparse_parallel.push((time_total - 0, 0, time_total));        
 
-        //CPU Dense
+        //CPU Dense Parallel
         let start = std::time::Instant::now();
         matrix1_dense.product_dense_par(&matrix2_dense);
         let time_total = start.elapsed().as_micros();
-        times_cpu_dense_parallel.push((0, time_total - 0, time_total));
+        times_cpu_dense_parallel.push((time_total - 0, 0, time_total));
     }
     
     // Calculate average times
