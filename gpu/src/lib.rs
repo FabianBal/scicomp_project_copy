@@ -5,6 +5,10 @@ pub use sparse::*;
 // pub use sparse::CSRBuffer;
 
 
+pub mod dense;
+// pub use dense;
+
+
 
 use wgpu::{util::DeviceExt, Adapter, Device, Instance, Queue};
 use futures_intrusive::channel::shared::oneshot_channel;
