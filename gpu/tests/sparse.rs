@@ -41,7 +41,7 @@ async fn test_wgpu_sparse() {
     let n = 10;    
 
 
-    for k in 1..n {
+    for k in 0..n {
         println!("Testing k={}", k);
 
 

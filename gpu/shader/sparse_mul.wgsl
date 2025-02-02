@@ -21,6 +21,9 @@ struct DataEntry {
 
 // For algorithm see CPU sparse implementation
 
+// The constants HIERDIESPALTEN and HIERWGANZ get replaced by the Rust code
+// by the number of columns of the result, resp. the workgroup size.
+
 
 @compute @workgroup_size(HIERWGANZ,1,1)
 fn main(@builtin(local_invocation_id) id: vec3<u32>, @builtin(workgroup_id) wid: vec3<u32>) {
@@ -29,7 +32,7 @@ fn main(@builtin(local_invocation_id) id: vec3<u32>, @builtin(workgroup_id) wid:
 
 
     var res_curr_row: array<f32, HIERDIESPALTEN> = array<f32, HIERDIESPALTEN>();
-    var nz_row_marker: array<u32, HIERDIESPALTEN> = array<u32, HIERDIESPALTEN>();     
+    var nz_row_marker: array<u32, HIERDIESPALTEN> = array<u32, HIERDIESPALTEN>();   
 
 
     let i = id.x + wid.x * HIERWGANZu;

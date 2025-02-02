@@ -20,12 +20,12 @@ use matrix_base::{COO, CSR};
 
 #[tokio::main]
 async fn main() {
-    let batch_size = 6;
+    let batch_size =4;
 
 
-    let a = COO::read_mtx(Path::new("matrix_instances/generated/case_0000_A.mtx"), true).expect("Failed reading matrix file.");
+    let a = COO::read_mtx(Path::new("matrix_instances/generated/case_0001_A.mtx"), true).expect("Failed reading matrix file.");
     let a = CSR::from_coo(a); 
-    let b = COO::read_mtx(Path::new("matrix_instances/generated/case_0000_B.mtx"), true).expect("Failed reading matrix file.");
+    let b = COO::read_mtx(Path::new("matrix_instances/generated/case_0001_B.mtx"), true).expect("Failed reading matrix file.");
     let b = CSR::from_coo(b);
 
 
@@ -38,7 +38,7 @@ async fn main() {
 
 
 
-    let c = COO::read_mtx(Path::new("matrix_instances/generated/case_0000_C.mtx"), true).expect("Failed reading matrix file.");
+    let c = COO::read_mtx(Path::new("matrix_instances/generated/case_0001_C.mtx"), true).expect("Failed reading matrix file.");
 
     println!("bbb {} {}", res.data.len(), c.data.len());
     println!("ccc {:?} {:?}", res.shape, c.shape);
@@ -49,26 +49,26 @@ async fn main() {
 
     
     
-    for (i,j,x) in res.data {
-        // let gd = result[idx];
-        // println!("({},{}) = {} ({})", i,j,x, c.get(i as usize, j as usize));
-        if (x as f64 - c.get(i,j)).abs() > 1e-5 {
-            println!("AAAAA  ({},{}) = {} ({})", i,j,x, c.get(i as usize, j as usize));
-        }
-        
-    }
-
-
-
-    // let res = res.to_dense();
-    // for i in 0..c.shape.0 {
-    //     for j in 0..c.shape.1 {
-    //         if  (res.get(i,j) - c.get(i, j)).abs() > 1e-5 {
-
-    //             println!("UAU ({} {}): {} {}", i,j, res.get(i,j), c.get(i, j));
-    //         }
+    // for (i,j,x) in res.data {
+    //     // let gd = result[idx];
+    //     // println!("({},{}) = {} ({})", i,j,x, c.get(i as usize, j as usize));
+    //     if (x as f64 - c.get(i,j)).abs() > 1e-5 {
+    //         println!("AAAAA  ({},{}) = {} ({})", i,j,x, c.get(i as usize, j as usize));
     //     }
+        
     // }
+
+
+
+    let res = res.to_dense();
+    for i in 0..c.shape.0 {
+        for j in 0..c.shape.1 {
+            if  (res.get(i,j) - c.get(i, j)).abs() > 1e-5 {
+
+                println!("UAU ({} {}): {} {}", i,j, res.get(i,j), c.get(i, j));
+            }
+        }
+    }
 
 
 
