@@ -82,20 +82,24 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
     let mut times_blas = Vec::with_capacity(repeat_count);
 
     // run benchmark for each library
+    //cuBLAS
     for _ in 1..=repeat_count {
-        //cuBLAS
         let start = std::time::Instant::now();
         let (_matrix, time_raw_multiply) = cublas::multiply(&matrix1_dense, &matrix2_dense).unwrap();
         let time_total = start.elapsed().as_micros();
         times_cublas.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
-        
-        //cuSPARSE
+    }
+
+    //cuSPARSE
+    for _ in 1..=repeat_count {        
         let start = std::time::Instant::now();
         let (_matrix, time_raw_multiply) = cusparse::multiply(&matrix1_csr, &matrix2_csr).unwrap();
         let time_total = start.elapsed().as_micros();
         times_cusparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
+    }
 
-        //GPU Dense Parallel
+    //GPU Dense Parallel
+    for _ in 1..=repeat_count {
         let start = std::time::Instant::now();
         let mut time_raw_multiply = 0;
         //-----------------------------------------broken part without this it works xD
@@ -104,7 +108,10 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let time_total = start.elapsed().as_micros();
         times_gpu_dense.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
 
-        //GPU Sparse
+    }
+
+    //GPU Sparse
+    for _ in 1..=repeat_count {
         let batch_size = 18;//not sure about this value
         let start_total = std::time::Instant::now();
         let mut time_raw_multiply= 0;
@@ -121,8 +128,10 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         //-----------------------------------------end broken part
         let time_total = start_total.elapsed().as_micros();
         times_gpu_sparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
+    }
 
-        //BLAS
+    //BLAS
+    for _ in 1..=repeat_count {
         let start = std::time::Instant::now();
         let a = blas_dense::BlasDense::from_coo(&matrix1_coo);
         let b = blas_dense::BlasDense::from_coo(&matrix2_coo);
@@ -131,20 +140,26 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let time_raw_multiply = start_raw_multiply.elapsed().as_micros();
         let time_total = start.elapsed().as_micros();
         times_blas.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
-        
-        //CPU Sparse
+    }
+
+    //CPU Sparse
+    for _ in 1..=repeat_count {
         let start = std::time::Instant::now();
         matrix1_csr.product_sparse(&matrix2_csr);
         let time_total = start.elapsed().as_micros();
         times_cpu_sparse.push((time_total - 0, 0, time_total));
-        
-        //CPU Sparse Parallel
+    }
+
+    //CPU Sparse Parallel
+    for _ in 1..=repeat_count {
         let start = std::time::Instant::now();
         matrix1_csr.product_sparse_par(&matrix2_csr);
         let time_total = start.elapsed().as_micros();
         times_cpu_sparse_parallel.push((time_total - 0, 0, time_total));        
+    }
 
-        //CPU Dense Parallel
+    //CPU Dense Parallel
+    for _ in 1..=repeat_count {
         let start = std::time::Instant::now();
         matrix1_dense.product_dense_par(&matrix2_dense);
         let time_total = start.elapsed().as_micros();
