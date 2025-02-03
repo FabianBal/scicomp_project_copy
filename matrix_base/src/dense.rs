@@ -30,4 +30,30 @@ impl Dense {
             println!();
         }
     }
+
+    pub fn as_column_dominant(&self) -> Self {
+        let mut transposed_data = vec![0.0; self.shape.0 * self.shape.1];
+        for i in 0..self.shape.0 {
+            for j in 0..self.shape.1 {
+                transposed_data[j * self.shape.0 + i] = self.data[i * self.shape.1 + j];
+            }
+        }
+        Dense {
+            data: transposed_data,
+            shape: (self.shape.0, self.shape.1),
+        }
+    }
+
+    pub fn as_row_dominant(&self) -> Self {
+        let mut transposed_data = vec![0.0; self.shape.0 * self.shape.1];
+        for i in 0..self.shape.0 {
+            for j in 0..self.shape.1 {
+                transposed_data[i * self.shape.1 + j] = self.data[j * self.shape.0 + i];
+            }
+        }
+        Dense {
+            data: transposed_data,
+            shape: (self.shape.0, self.shape.1),
+        }
+    }
 }

@@ -9,6 +9,10 @@ pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<(Dense, u128, u1
     let time_total: u128;
     // Ensure the matrices can be multiplied
     assert_eq!(matrix1.shape.1, matrix2.shape.0);
+
+    //convert matrices for blas file format
+    let matrix1 = matrix1.as_column_major();
+    let matrix2 = matrix2.as_column_major();
     
     // Flatten the matrices
     let a: Vec<f32> = matrix1.data.iter().map(|&x| x as f32).collect();
@@ -67,6 +71,8 @@ pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<(Dense, u128, u1
         data: result_data,
         shape: (matrix1.shape.0, matrix2.shape.1),
     };
+
+    let result = result.as_row_major();
 
     Ok((result, time_raw_multiply, time_total))
 }
