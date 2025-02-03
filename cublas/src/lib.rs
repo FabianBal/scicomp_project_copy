@@ -4,23 +4,26 @@ use cust::error::CudaResult;
 use std::ptr;
 use cublas_sys::{cublasCreate_v2, cublasDestroy_v2, cublasSgemm_v2, cublasHandle_t};
 
-pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<(Dense, u128)> {
+pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<(Dense, u128, u128)> {
     let time_raw_multiply: u128;
+    let time_total: u128;
     // Ensure the matrices can be multiplied
     assert_eq!(matrix1.shape.1, matrix2.shape.0);
-
-    // Initialize CUDA context
-    cust::init(cust::CudaFlags::empty())?;
-
-    // Create cuBLAS handle
-    let mut handle: cublasHandle_t = ptr::null_mut();
-    unsafe { cublasCreate_v2(&mut handle) };
-
+    
     // Flatten the matrices
     let a: Vec<f32> = matrix1.data.iter().map(|&x| x as f32).collect();
     let b: Vec<f32> = matrix2.data.iter().map(|&x| x as f32).collect();
     let mut c: Vec<f32> = vec![0.0; matrix1.shape.0 * matrix2.shape.1];
 
+    
+    let start_total = std::time::Instant::now();
+    // Initialize CUDA context
+    cust::init(cust::CudaFlags::empty())?;
+    
+    // Create cuBLAS handle
+    let mut handle: cublasHandle_t = ptr::null_mut();
+    unsafe { cublasCreate_v2(&mut handle) };
+    
     // Allocate device memory
     let d_a = DeviceBuffer::from_slice(&a)?;
     let d_b = DeviceBuffer::from_slice(&b)?;
@@ -56,6 +59,8 @@ pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<(Dense, u128)> {
     // Destroy cuBLAS handle
     unsafe { cublasDestroy_v2(handle) };
 
+    time_total = start_total.elapsed().as_micros();
+
     // Convert result back to Dense
     let result_data: Vec<f64> = c.iter().map(|&x| x as f64).collect();
     let result = Dense {
@@ -63,5 +68,5 @@ pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<(Dense, u128)> {
         shape: (matrix1.shape.0, matrix2.shape.1),
     };
 
-    Ok((result, time_raw_multiply))
+    Ok((result, time_raw_multiply, time_total))
 }

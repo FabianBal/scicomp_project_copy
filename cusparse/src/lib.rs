@@ -11,20 +11,12 @@ use bindings::*;
 /// Multiply two CSR matrices using cuSPARSE
 /// helpful: https://github.com/NVIDIA/CUDALibrarySamples/blob/master/cuSPARSE/spgemm/spgemm_example.c
 
-pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<(CSR, u128)> {
+pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<(CSR, u128, u128)> {
     let time_raw_multiply: u128;
+    let time_total: u128;
     // Ensure the matrices can be multiplied
     assert_eq!(matrix1.shape.1, matrix2.shape.0);
-
-    // Initialize CUDA context
-    let _ctx = cust::quick_init()?;
-
-    // Create cuSPARSE handle
-    let mut cusparse_handle: cusparseHandle_t = ptr::null_mut();
-    unsafe {
-        cusparseCreate(&mut cusparse_handle);
-    }
-
+    
     // Matrix dimensions and non-zero counts
     let rows1 = matrix1.shape.0 as i64;
     let cols1 = matrix1.shape.1 as i64;
@@ -36,14 +28,35 @@ pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<(CSR, u128)> {
     let mut cols_result: i64 = 0;
     let mut nnz_result: i64 = 0;
 
-    // Copy matrix data to device
-    let d_csr_row_ptr1 = DeviceBuffer::from_slice(&matrix1.row_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>())?;
-    let d_csr_col_ind1 = DeviceBuffer::from_slice(&matrix1.col_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>())?;
-    let d_csr_values1 = DeviceBuffer::from_slice(&matrix1.values.iter().map(|value| *value as f32).collect::<Vec<f32>>())?;
+    //cast to i32 / f32
+    let row_pos1 = matrix1.row_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>();
+    let col_ind1 = matrix1.col_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>();
+    let csr_values1 = matrix1.values.iter().map(|value| *value as f32).collect::<Vec<f32>>();
 
-    let d_csr_row_ptr2 = DeviceBuffer::from_slice(&matrix2.row_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>())?;
-    let d_csr_col_ind2 = DeviceBuffer::from_slice(&matrix2.col_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>())?;
-    let d_csr_values2 = DeviceBuffer::from_slice(&matrix2.values.iter().map(|value| *value as f32).collect::<Vec<f32>>())?;
+    let row_pos2 = matrix2.row_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>();
+    let col_ind2 = matrix2.col_pos.iter().map(|value| *value as i32).collect::<Vec<i32>>();
+    let csr_values2 = matrix2.values.iter().map(|value| *value as f32).collect::<Vec<f32>>();
+
+    let start_total = std::time::Instant::now();
+
+    // Initialize CUDA context
+    let _ctx = cust::quick_init()?;
+
+    // Create cuSPARSE handle
+    let mut cusparse_handle: cusparseHandle_t = ptr::null_mut();
+    unsafe {
+        cusparseCreate(&mut cusparse_handle);
+    }
+
+
+    // Copy matrix data to device
+    let d_csr_row_ptr1 = DeviceBuffer::from_slice(&row_pos1)?;
+    let d_csr_col_ind1 = DeviceBuffer::from_slice(&col_ind1)?;
+    let d_csr_values1 = DeviceBuffer::from_slice(&csr_values1)?;
+
+    let d_csr_row_ptr2 = DeviceBuffer::from_slice(&row_pos2)?;
+    let d_csr_col_ind2 = DeviceBuffer::from_slice(&col_ind2)?;
+    let d_csr_values2 = DeviceBuffer::from_slice(&csr_values2)?;
     
     // Allocate memory for result matrix row pointers
     let d_result_row_ptr: DeviceBuffer<i32> = DeviceBuffer::zeroed((rows_result + 1) as usize)?;
@@ -235,6 +248,8 @@ pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<(CSR, u128)> {
         cusparseDestroySpMat(sparse_result);
         cusparseDestroy(cusparse_handle);
     }
+
+    let time_total = start_total.elapsed().as_micros();
     
     // Return the result matrix in CSR format
     Ok((CSR {
@@ -242,5 +257,5 @@ pub fn multiply(matrix1: &CSR, matrix2: &CSR) -> CudaResult<(CSR, u128)> {
         col_pos: h_result_col_ind.into_iter().map(|x| x as usize).collect(),
         values: h_result_values.iter().map(|&x| x as f64).collect(),
         shape: (rows1 as usize, cols2 as usize),
-    }, time_raw_multiply))
+    }, time_raw_multiply, time_total))
 }

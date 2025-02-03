@@ -6,8 +6,10 @@ use std::path::Path;
 use matrix_base::Dense;
 
 
-pub fn multiply_for_benchmark(matrix1: &Dense, matrix2: &Dense) -> u128 {
+pub fn multiply_for_benchmark(matrix1: &Dense, matrix2: &Dense) -> (u128, u128) {
     let mut time_raw_multiply = 0;
+    let time_total: u128;
+
     // convert matrix struct Dense to used format
     let matrix_a = &matrix1.data.iter().map(|value| *value as f32).collect::<Vec<f32>>();
     let matrix_b = &matrix2.data.iter().map(|value| *value as f32).collect::<Vec<f32>>();
@@ -15,6 +17,8 @@ pub fn multiply_for_benchmark(matrix1: &Dense, matrix2: &Dense) -> u128 {
     let row_size_b = matrix2.shape.0 as u32;
     let col_size_a = matrix1.shape.1 as u32;
     let col_size_b = matrix2.shape.1 as u32;
+
+    let start_total = std::time::Instant::now();
     
     let multiply_future = async {
         // create WGPU-Instanz, Adapter und Device
@@ -50,8 +54,9 @@ pub fn multiply_for_benchmark(matrix1: &Dense, matrix2: &Dense) -> u128 {
         time_raw_multiply = start_raw_multiply.elapsed().as_micros();
     };
     tokio::runtime::Runtime::new().unwrap().block_on(multiply_future);
-    
-    time_raw_multiply
+
+    time_total = start_total.elapsed().as_micros();
+    (time_raw_multiply, time_total)
 }
 
 

@@ -84,28 +84,23 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
     // run benchmark for each library
     //cuBLAS
     for _ in 1..=repeat_count {
-        let start = std::time::Instant::now();
-        let (_matrix, time_raw_multiply) = cublas::multiply(&matrix1_dense, &matrix2_dense).unwrap();
-        let time_total = start.elapsed().as_micros();
+        let (_matrix, time_raw_multiply, time_total) = cublas::multiply(&matrix1_dense, &matrix2_dense).unwrap();
         times_cublas.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
 
     //cuSPARSE
-    for _ in 1..=repeat_count {        
-        let start = std::time::Instant::now();
-        let (_matrix, time_raw_multiply) = cusparse::multiply(&matrix1_csr, &matrix2_csr).unwrap();
-        let time_total = start.elapsed().as_micros();
+    for _ in 1..=repeat_count {
+        let (_matrix, time_raw_multiply, time_total) = cusparse::multiply(&matrix1_csr, &matrix2_csr).unwrap();
         times_cusparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
 
     //GPU Dense Parallel
     for _ in 1..=repeat_count {
-        let start = std::time::Instant::now();
         let mut time_raw_multiply = 0;
+        let mut time_total = 0;
         //-----------------------------------------broken part without this it works xD
-        time_raw_multiply = gpu::dense::multiply_for_benchmark(&matrix1_dense, &matrix2_dense);
+        (time_raw_multiply, time_total) = gpu::dense::multiply_for_benchmark(&matrix1_dense, &matrix2_dense);
         //-----------------------------------------end broken part
-        let time_total = start.elapsed().as_micros();
         times_gpu_dense.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
 
     }
