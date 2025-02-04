@@ -1,5 +1,5 @@
 use core::time;
-use std::{env, fmt::write, fs::{self, File}, io::{stdout, Write}, os::unix::raw::time_t, path::{Path, PathBuf}, vec};
+use std::{env, fmt::write, fs::{self, File}, io::{stdout, BufRead, Write}, os::unix::raw::time_t, path::{Path, PathBuf}, vec};
 use matrix_base::{COO, CSR, Dense};
 use fakscpu::{dense::DenseProd, sparse::SparseProd};
 use wgpu::{BindGroup, BindGroupLayout, ShaderModel, ShaderModule};
@@ -49,7 +49,7 @@ fn main() {
     for matrix1_path in &matrix_paths {
         for matrix2_path in &matrix_paths {
             // Make sure that the matrices are compatible
-            if COO::read_mtx(&matrix1_path, false).unwrap().shape.1 == COO::read_mtx(&matrix2_path, false).unwrap().shape.0 {
+            if get_matrix_shape(matrix1_path).1 == get_matrix_shape(matrix2_path).0 {
                 let matrix1_name = matrix1_path.file_name().unwrap().to_str().unwrap();
                 let matrix2_name = matrix2_path.file_name().unwrap().to_str().unwrap();
                 print!("{:<20}{:<20}", matrix1_name.chars().take(20-1).collect::<String>(), matrix2_name.chars().take(20-1).collect::<String>());
@@ -146,7 +146,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let mut time_total = 0;
         let _matrix_dense: Vec<f32>;
         //-----------------------------------------broken part without this it works xD
-        (_matrix_dense, time_raw_multiply, time_total) = gpu::dense::multiply_for_benchmark(&matrix1_dense, &matrix2_dense, 1000*1000*1000);
+        // (_matrix_dense, time_raw_multiply, time_total) = gpu::dense::multiply_for_benchmark(&matrix1_dense, &matrix2_dense, 1000*1000*1000);
         //-----------------------------------------end broken part
         times_gpu_dense.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
@@ -159,14 +159,14 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let start_total = std::time::Instant::now();
         let mut time_raw_multiply= 0;
         //-----------------------------------------broken part without this it works xD
-        let multiply_future = async {
-            let mut gpusm = gpu::GPUSparseMultiplyer::new(&matrix1_csr, &matrix2_csr, batch_size, WgpuTask::new(1000*1000*1000).await).await;
-            gpusm.create_and_load_buffer();
-            let start_raw_multiply = std::time::Instant::now();
-            let _res = gpusm.doit().await;
-            time_raw_multiply = start_raw_multiply.elapsed().as_micros();
-        };
-        tokio::runtime::Runtime::new().unwrap().block_on(multiply_future);
+        // let multiply_future = async {
+        //     let mut gpusm = gpu::GPUSparseMultiplyer::new(&matrix1_csr, &matrix2_csr, batch_size, WgpuTask::new(1000*1000*1000).await).await;
+        //     gpusm.create_and_load_buffer();
+        //     let start_raw_multiply = std::time::Instant::now();
+        //     let _res = gpusm.doit().await;
+        //     time_raw_multiply = start_raw_multiply.elapsed().as_micros();
+        // };
+        // tokio::runtime::Runtime::new().unwrap().block_on(multiply_future);
         //-----------------------------------------end broken part
         let time_total = start_total.elapsed().as_micros();
         times_gpu_sparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
@@ -235,4 +235,27 @@ fn get_matrix_paths(folder_path: &str) -> Vec<PathBuf> {
         }
     }
     matrix_paths
+}
+
+fn get_matrix_shape(file_name: &PathBuf) -> (usize, usize) {
+    let file = File::open(file_name).expect("Error parsing file.");
+    let file = std::io::BufReader::new(file);
+
+    let mut liter = file.lines();
+
+    // "Header" / comments
+    // Ignore all comments / type codes (assume 'MatrixMarket matrix coordinate real general format')
+    for line in liter.by_ref() {
+        let line = String::from(line.map_err(|_| ("Error parsing line")).unwrap().trim());
+        if line.starts_with("%"){
+            continue;
+        } else {
+            let mut hspl = line.split(' ');
+            let m = hspl.next().unwrap().parse().unwrap();
+            let n = hspl.next().unwrap().parse().unwrap();
+            let _l: usize = hspl.next().unwrap().parse().unwrap();
+            return (m, n);
+        }            
+    }
+    panic!("{}", format!("no shape found in file {}", file_name.file_name().unwrap().to_str().unwrap()))
 }
