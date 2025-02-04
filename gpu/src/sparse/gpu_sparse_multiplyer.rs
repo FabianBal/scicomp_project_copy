@@ -11,10 +11,10 @@ use crate::*;
 // }
 
 
-pub struct GPUSparseMultiplyer<'a> {
+pub struct GPUSparseMultiplyer {
     pub wgpu_task: WgpuTask,
-    pub a: &'a CSR,
-    pub b: &'a CSR,
+    pub a: GPUCSR,
+    pub b: GPUCSR,
     pub shader: ShaderModule,
     pub batch_size: usize,
     pub bind_groups: Option<(BindGroup, BindGroup, BindGroup)>,
@@ -28,7 +28,7 @@ pub struct GPUSparseMultiplyer<'a> {
 
 
 
-impl<'a> GPUSparseMultiplyer<'a> {
+impl<'a> GPUSparseMultiplyer{
     pub async fn new(a: &'a CSR, b: &'a CSR, batch_size: usize, wgpu_task: WgpuTask) -> Self {
         //let wgpu_task = WgpuTask::new().await;
 
@@ -67,7 +67,8 @@ impl<'a> GPUSparseMultiplyer<'a> {
         });
 
 
-
+        let a = GPUCSR::new(&a);
+        let b = GPUCSR::new(&b);
         
         GPUSparseMultiplyer{wgpu_task, a, b, shader, batch_size, bind_groups: None, bind_group_layouts: None, buffer_res: None, buffer_res_staging: None, nnz_pred, n_disps}
     }
@@ -84,8 +85,8 @@ impl<'a> GPUSparseMultiplyer<'a> {
 
         
 
-        let buffer_res = ResultBuffer::new(&device, nnz_pred, self.b.shape.1,  "C", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC);
-        let buffer_res_staging = ResultBuffer::new(&device, nnz_pred, self.b.shape.1,  "C", wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST);
+        let buffer_res = ResultBuffer::new(&device, nnz_pred, self.b.shape.1 as usize,  "C", wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC);
+        let buffer_res_staging = ResultBuffer::new(&device, nnz_pred, self.b.shape.1 as usize,  "C", wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST);
 
 
 
@@ -167,11 +168,12 @@ impl<'a> GPUSparseMultiplyer<'a> {
             // compute_pass.dispatch_workgroups(1,1,1); // Angepasste Dispatch-Parameter
         }
 
-        let nnz_pred = size_prediction(&self.a, &self.b);
+        // let nnz_pred = size_prediction(&self.a, &self.b);
+        let nnz_pred = self.nnz_pred;
 
         let buffer_res_staging = self.buffer_res_staging.as_ref().expect(msg);
 
-        self.buffer_res.as_ref().expect(msg).copy_b2b(&buffer_res_staging, nnz_pred, self.b.shape.1, &mut encoder);
+        self.buffer_res.as_ref().expect(msg).copy_b2b(&buffer_res_staging, nnz_pred, self.b.shape.1 as usize, &mut encoder);
         self.wgpu_task.queue.submit(Some(encoder.finish()));
 
         let result_buffer_idx = buffer_res_staging.idx.slice(..);
@@ -218,7 +220,7 @@ impl<'a> GPUSparseMultiplyer<'a> {
         // let data_final: Vec<(usize, usize, f64)> = result[..].into_iter().map(|entry| (entry.i as usize, entry.j as usize, entry.x as f64)).collect();
         // println!("DEB {:?}", data_final);
 
-        COO {data: data_final, shape: (self.a.shape.0, self.b.shape.1)}
+        COO {data: data_final, shape: (self.a.shape.0 as usize, self.b.shape.1 as usize)}
 
         // (n_c_data as usize, gd)
 
