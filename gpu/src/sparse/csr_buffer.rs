@@ -7,6 +7,15 @@ use bytemuck::{Pod, Zeroable};
 use matrix_base::{COO, CSR};
 
 
+pub struct GPUCSR {
+    pub row_pos: Vec<u32>,
+    pub col_pos: Vec<u32>,
+    pub values: Vec<f32>,
+    pub shape: (u32, u32)
+}
+
+
+// Type-specific CSR matrix
 pub struct CSRBuffer {
     pub row_pos: Buffer,
     pub col_pos: Buffer,
@@ -15,28 +24,38 @@ pub struct CSRBuffer {
 }
 
 
-
-
-impl CSRBuffer {
-    pub fn new(device: &Device, a: &CSR, name: &str, usage: BufferUsages) -> Self {
+impl GPUCSR {
+    pub fn new (a: &CSR) -> Self  {
         let row_pos: Vec<u32> = a.row_pos.iter().map(|i| (*i as u32) ).collect();
         let col_pos: Vec<u32> = a.col_pos.iter().map(|j| (*j as u32) ).collect();
         let values: Vec<f32> = a.values.iter().map(|x| (*x as f32) ).collect();
 
+        GPUCSR{row_pos, col_pos, values, shape: (a.shape.0 as u32, a.shape.1 as u32) }
+    }
+}
+
+
+
+impl CSRBuffer {
+    pub fn new(device: &Device, a: &GPUCSR, name: &str, usage: BufferUsages) -> Self {
+        // let row_pos: Vec<u32> = a.row_pos.iter().map(|i| (*i as u32) ).collect();
+        // let col_pos: Vec<u32> = a.col_pos.iter().map(|j| (*j as u32) ).collect();
+        // let values: Vec<f32> = a.values.iter().map(|x| (*x as f32) ).collect();
+
 
         let row_pos = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some(format!("CSR Matrix {}.row_pos", name).as_str()),
-            contents: bytemuck::cast_slice(&row_pos),
+            contents: bytemuck::cast_slice(&a.row_pos),
             usage: usage,
         });
         let col_pos = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some(format!("CSR Matrix {}.col_pos", name).as_str()),
-            contents: bytemuck::cast_slice(&col_pos),
+            contents: bytemuck::cast_slice(&a.col_pos),
             usage: usage,
         });
         let values = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some(format!("CSR Matrix {}.values", name).as_str()),
-            contents: bytemuck::cast_slice(&values),
+            contents: bytemuck::cast_slice(&a.values),
             usage: usage,
         });
         let shape = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {

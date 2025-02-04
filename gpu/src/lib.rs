@@ -1,3 +1,4 @@
+use std::cmp::min;
 
 pub mod sparse;
 pub use sparse::*;
@@ -43,7 +44,7 @@ pub fn size_prediction(A: &CSR, B: &CSR) -> usize {
     }
 
 
-    nnzs.iter().sum()
+    min(nnzs.iter().sum(), m * B.shape.1) 
 }
 
 

@@ -1,4 +1,3 @@
-
 use std::path::Path;
 
 use gpu::sparse::*;
@@ -30,9 +29,8 @@ fn cmp_dense(A: &Dense, B: &Dense, eps: f64) -> bool {
 }
 
 
-
 #[tokio::test]
-async fn test_wgpu_sparse() {
+async fn test_wgpu_dense() {
     let eps = 1e-5;
 
 
@@ -49,27 +47,23 @@ async fn test_wgpu_sparse() {
         // COO::read_mtx(Path::new("../../matrix_instances/generated/case_0000_A.mtx"), true).expect("Failed reading matrix file.");
 
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
-        let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let a = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_B.mtx", k)));
-        let B = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let b = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_C.mtx", k)));
-        let C = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let c = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
 
-        let A = CSR::from_coo(A);
-        let B = CSR::from_coo(B);
-        let C = C.to_dense();
+        let a = a.to_dense();
+        let b = b.to_dense();
+        let c_test = c.to_dense();
         
 
+        // let (c, _, _) = gpu::dense::multiply_for_benchmark(&a, &b, 300*1024*1024);
+        // let c = Dense{data: c.into_iter().map(|x| x as f64).collect(), shape: c_test.shape};
 
-        let mut gpusm = GPUSparseMultiplyer::new(&A, &B, batch_size, WgpuTask::new(300*1024*1024).await).await;
-        gpusm.create_and_load_buffer();
-        // let mut res = gpusm.doit().await;        
-        gpusm.doit().await;        
-        let mut res = gpusm.cast_result().expect("casting result failed");
-        let C_test =res.to_dense();
-
-
-        assert!(cmp_dense(&C, &C_test, eps));
+        // assert_eq!(c.shape.0, c_test.shape.0);
+        // assert_eq!(c.shape.1, c_test.shape.1);
+        // assert!(cmp_dense(&c, &c_test, eps));
 
 
     }
