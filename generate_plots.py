@@ -49,5 +49,8 @@ plt.show()
 
 # Show the plot
 plt.show()
+output_filename = "/".join(filename.split("/")[:-1]) + "/plots/" + filename.split("/")[-1].replace(".csv", ".svg")
+plt.savefig(output_filename, format="svg")
+
 output_filename = "/".join(filename.split("/")[:-1]) + "/plots/" + filename.split("/")[-1].replace(".csv", "")
 plt.savefig(output_filename)
