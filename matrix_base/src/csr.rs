@@ -15,7 +15,7 @@ pub struct CSR {
 
 
 impl CSR {
-    pub fn from_coo(coo: COO) -> Self {
+    pub fn from_coo(coo: &COO) -> Self {
         let mut row_pos: Vec<usize> = vec![];
         let mut col_pos: Vec<usize> = vec![];
         let mut values: Vec<f64> = vec![];
