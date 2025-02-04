@@ -74,9 +74,9 @@ fn main() {
     println!("\n\n{}\n\n{}", overhead_table, multiplication_table);
 
     //generate output files
-    let output_filename_raw_multiplication = format!("./output/result_times_raw_multiplication_repeat_count_{}_{}.csv", repeat_count, chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"));
-    let output_filename_overhead = format!("./output/result_times_overhead_repeat_count_{}_{}.csv", repeat_count, chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"));
-    let output_filename_total = format!("./output/result_times_total_repeat_count_{}_{}.csv", repeat_count, chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"));
+    let output_filename_raw_multiplication = format!("./output/{}_result_times_raw_multiplication_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
+    let output_filename_overhead = format!("./output/{}_result_times_overhead_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
+    let output_filename_total = format!("./output/{}result_times_total_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
     let mut file_raw_multiplication = File::create(&output_filename_raw_multiplication).expect("Failed to create output file");
     let mut file_overhead = File::create(&output_filename_overhead).expect("Failed to create output file");
     let mut file_total = File::create(&output_filename_total).expect("Failed to create output file");
@@ -129,7 +129,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let (_matrix, time_raw_multiply, time_total) = cublas::multiply(&matrix1_dense, &matrix2_dense).unwrap();
         times_cublas.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
-    print!("{:<15}{}", times_cublas[0].2, "");
+    print!("{:<15}", times_cublas.iter().map(|&(_, _, total)| total).sum::<u128>() / repeat_count as u128);
     stdout().flush().unwrap();
     
     //cuSPARSE
@@ -137,7 +137,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let (_matrix, time_raw_multiply, time_total) = cusparse::multiply(&matrix1_csr, &matrix2_csr).unwrap();
         times_cusparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
-    print!("{:<15}{}", times_cusparse[0].2, "");
+    print!("{:<15}", times_cusparse.iter().map(|&(_, _, total)| total).sum::<u128>() / repeat_count as u128);
     stdout().flush().unwrap();
     
     //GPU Dense Parallel
@@ -150,7 +150,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         //-----------------------------------------end broken part
         times_gpu_dense.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
-    print!("{:<15}{}", times_gpu_dense[0].2, "");
+    print!("{:<15}", times_gpu_dense.iter().map(|&(_, _, total)| total).sum::<u128>() / repeat_count as u128);
     stdout().flush().unwrap();
 
     //GPU Sparse
@@ -172,7 +172,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         times_gpu_sparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
     
-    print!("{:<15}{}", times_gpu_sparse[0].2, "");
+    print!("{:<15}", times_gpu_sparse.iter().map(|&(_, _, total)| total).sum::<u128>() / times_gpu_sparse.len() as u128);
     stdout().flush().unwrap();
 
     //BLAS
@@ -186,7 +186,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let time_total = start.elapsed().as_micros();
         times_blas.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
-    print!("{:<15}{}", times_blas[0].2, "");
+    print!("{:<15}", times_blas.iter().map(|&(_, _, total)| total).sum::<u128>() / times_blas.len() as u128);
     stdout().flush().unwrap();
     
     //CPU Sparse Parallel
@@ -196,7 +196,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let time_total = start.elapsed().as_micros();
         times_cpu_sparse_parallel.push((time_total - 0, 0, time_total));
     }
-    print!("{:<25}{}", times_cpu_sparse_parallel[0].2, "");
+    print!("{:<25}", times_cpu_sparse_parallel.iter().map(|&(_, _, total)| total).sum::<u128>() / times_cpu_sparse_parallel.len() as u128);
     stdout().flush().unwrap();
     
     //CPU Dense Parallel
@@ -206,7 +206,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let time_total = start.elapsed().as_micros();
         times_cpu_dense_parallel.push((time_total - 0, 0, time_total));
     }
-    print!("{:<25}{}", times_cpu_dense_parallel[0].2, "");
+    print!("{:<25}", times_cpu_dense_parallel.iter().map(|&(_, _, total)| total).sum::<u128>() / times_cpu_dense_parallel.len() as u128);
     stdout().flush().unwrap();
     println!();
 
