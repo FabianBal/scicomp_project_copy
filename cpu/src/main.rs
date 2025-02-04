@@ -1,7 +1,9 @@
 use std::path::Path;
 
 use fakscpu::sparse::SparseProd;
-use matrix_base::{Dense, COO, CSR};
+use matrix_base::{COO, CSR};
+
+// use std::cmp::min;
 
 // use matrix_base::HAHA;
 
@@ -17,7 +19,32 @@ use matrix_base::{Dense, COO, CSR};
 //     }
 // }
 
+// pub fn size_prediction(A: &CSR, B: &CSR) -> usize {
+//     let m = A.shape.0;
 
+//     let mut nnzs = vec![];
+
+//     println!("aaa {}", m);
+
+//     // for (i, col_pos_pos) in A.row_pos.iter().enumerate() {
+//     for i in 0..m {
+//         let i0 = A.row_pos[i];
+//         let i1 = A.row_pos[i+1];
+
+       
+
+//         let mut nnz_i = 0;
+//         for k in A.col_pos[i0..i1].iter() {
+//             nnz_i += B.get_row_nnz(*k); 
+//             // println!("aaa {} {} {}", i, k, nnz_i);
+//         }
+//         nnzs.push(nnz_i);
+//     }
+
+//     nnzs.iter().sum()
+//     // min(nnzs.iter().sum(), m * B.shape.1) 
+//     // min(nnzs.iter().sum(), m * B.shape.1) 
+// }
 
 
 
@@ -46,16 +73,22 @@ fn main() {
 
 
 
-    let fname = Path::new("../matrix_instances/generated/case_0000_A.mtx");
+    // let fname = Path::new("../matrix_instances/generated/case_0000_A.mtx");
+    let fname = Path::new("matrix_instances/generated/sparse/sparse_30_B.mtx");
     let a = COO::read_mtx(fname, true).expect(":(");
 
     // a.to_dense().print();
 
-    let fname = Path::new("../matrix_instances/generated/case_0000_B.mtx");
+    // let fname = Path::new("../matrix_instances/generated/case_0000_B.mtx");
+    let fname = Path::new("matrix_instances/generated/sparse/sparse_30_A.mtx");
     let b = COO::read_mtx(fname, true).expect(":(");
     
-    let a = CSR::from_coo(a);
-    let b = CSR::from_coo(b);
+    let a = CSR::from_coo(&a);
+    let b = CSR::from_coo(&b);
+
+    // println!("size pred  {}", size_prediction(&a, &b));
+
+
     let rescoo = a.product_sparse_to_coo_par(&b);
 
     println!("{:?}", b.row_pos);
