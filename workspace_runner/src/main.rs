@@ -80,7 +80,7 @@ fn main() {
     //generate output files
     let output_filename_raw_multiplication = format!("./output/{}_result_times_raw_multiplication_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
     let output_filename_overhead = format!("./output/{}_result_times_overhead_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
-    let output_filename_total = format!("./output/{}result_times_total_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
+    let output_filename_total = format!("./output/{}_result_times_total_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
     let mut file_raw_multiplication = File::create(&output_filename_raw_multiplication).expect("Failed to create output file");
     let mut file_overhead = File::create(&output_filename_overhead).expect("Failed to create output file");
     let mut file_total = File::create(&output_filename_total).expect("Failed to create output file");
