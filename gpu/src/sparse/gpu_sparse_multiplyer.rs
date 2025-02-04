@@ -1,6 +1,6 @@
 
 
-use std::{cmp::min, os::unix::raw::dev_t};
+use std::cmp::min;
 
 use wgpu::{BindGroup, BindGroupLayout, ShaderModel, ShaderModule};
 
@@ -29,8 +29,8 @@ pub struct GPUSparseMultiplyer<'a> {
 
 
 impl<'a> GPUSparseMultiplyer<'a> {
-    pub async fn new(a: &'a CSR, b: &'a CSR, batch_size: usize) -> Self {
-        let wgpu_task = WgpuTask::new().await;
+    pub async fn new(a: &'a CSR, b: &'a CSR, batch_size: usize, wgpu_task: WgpuTask) -> Self {
+        //let wgpu_task = WgpuTask::new().await;
 
         let device = &wgpu_task.device;
 
@@ -43,7 +43,7 @@ impl<'a> GPUSparseMultiplyer<'a> {
         // let n_disps = 1;
 
 
-        println!("n_disps {}" , n_disps);
+        //println!("n_disps {}" , n_disps);
 
         let mut shader_code = match std::fs::read_to_string("gpu/shader/sparse_mul.wgsl") {
             Ok(s) => s,
@@ -197,7 +197,7 @@ impl<'a> GPUSparseMultiplyer<'a> {
         let data_result_idx = result_buffer_idx.get_mapped_range();
         let result: &[u32] = bytemuck::cast_slice(&data_result_idx);
         let n_c_data = result[0] as usize ;
-        println!("Berechnete Einträge: {:?}", n_c_data);
+        //println!("Berechnete Einträge: {:?}", n_c_data);
         let n_c_data = min(n_c_data, self.nnz_pred);
 
 

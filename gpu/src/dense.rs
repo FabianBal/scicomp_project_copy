@@ -4,9 +4,9 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 use matrix_base::Dense;
+use crate::WgpuTask;
 
-
-pub fn multiply_for_benchmark(matrix1: &Dense, matrix2: &Dense) -> (u128, u128) {
+pub fn multiply_for_benchmark(matrix1: &Dense, matrix2: &Dense, limit: u32) -> (Vec<f32>, u128, u128) {
     let mut time_raw_multiply = 0;
     let time_total: u128;
 
@@ -19,12 +19,27 @@ pub fn multiply_for_benchmark(matrix1: &Dense, matrix2: &Dense) -> (u128, u128) 
     let col_size_b = matrix2.shape.1 as u32;
 
     let start_total = std::time::Instant::now();
-    
+    let mut result = vec![0.0;16];
     let multiply_future = async {
         // create WGPU-Instanz, Adapter und Device
+        //let instance = wgpu::Instance::default();
+        //let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
+        //let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default(), None).await.unwrap();
+        let limits = wgpu::Limits {
+            max_storage_buffer_binding_size: limit, // 1 GB
+            max_buffer_size: limit as  u64,
+            ..wgpu::Limits::default() // Andere Limits beibehalten
+        };
+        let device_descriptor = wgpu::DeviceDescriptor{
+            label: Some("GPU Device"),
+            required_features: wgpu::Features::empty(),
+            required_limits: limits,
+            memory_hints: wgpu::MemoryHints::Performance
+
+        };
         let instance = wgpu::Instance::default();
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
-        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default(), None).await.unwrap();
+        let (device, queue) = adapter.request_device(&device_descriptor, None).await.unwrap();
         
         // create Buffer
         let (buffer_a, buffer_b, buffer_c, staging_buffer, matrix_a_size_buffer, matrix_b_size_buffer) = create_buffers(
@@ -39,7 +54,7 @@ pub fn multiply_for_benchmark(matrix1: &Dense, matrix2: &Dense) -> (u128, u128) 
         
         let start_raw_multiply = std::time::Instant::now();
         // calculate matrix/matrix
-        let _result = compute_matrix(
+        result = compute_matrix(
             &device,
             &queue,
             buffer_a,
@@ -56,7 +71,7 @@ pub fn multiply_for_benchmark(matrix1: &Dense, matrix2: &Dense) -> (u128, u128) 
     tokio::runtime::Runtime::new().unwrap().block_on(multiply_future);
 
     time_total = start_total.elapsed().as_micros();
-    (time_raw_multiply, time_total)
+    (result, time_raw_multiply, time_total)
 }
 
 
@@ -139,7 +154,7 @@ async fn compute_matrix(
     row_size_a: u32,
     col_size_b: u32,
 ) -> Vec<f32> {
-    let shader_code = std::fs::read_to_string("./shader/matrix_mult.wgsl").expect("Shader-Datei nicht gefunden");
+    let shader_code = std::fs::read_to_string("./gpu/shader/matrix_mult.wgsl").expect("Shader-Datei nicht gefunden");
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("Matrix Multiplication Shader"),
         source: wgpu::ShaderSource::Wgsl(shader_code.into()),

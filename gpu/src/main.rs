@@ -22,10 +22,10 @@ fn main() {
         })
         .collect();
 
-    if arguments.is_empty() {
-        println!("No arguments provided. Please provide a list of numbers to double.");
-        return;
-    }
+    // if arguments.is_empty() {
+    //     println!("No arguments provided. Please provide a list of numbers to double.");
+    //     return;
+    // }
 
     println!("Parsed {} arguments", arguments.len());
 
@@ -51,6 +51,7 @@ fn main() {
 
     // Print out some basic information about the adapter.
     println!("Running on Adapter: {:#?}", adapter.get_info());
+    println!("adapter-limts: {:#?}", adapter.limits());
 
     // Check to see if the adapter supports compute shaders. While WebGPU guarantees support for
     // compute shaders, wgpu supports a wider range of devices through the use of "downlevel" devices.

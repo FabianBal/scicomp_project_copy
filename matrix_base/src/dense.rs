@@ -31,7 +31,7 @@ impl Dense {
         }
     }
 
-    pub fn as_column_dominant(&self) -> Self {
+    pub fn as_column_major(&self) -> Self {
         let mut transposed_data = vec![0.0; self.shape.0 * self.shape.1];
         for i in 0..self.shape.0 {
             for j in 0..self.shape.1 {
@@ -44,7 +44,7 @@ impl Dense {
         }
     }
 
-    pub fn as_row_dominant(&self) -> Self {
+    pub fn as_row_major(&self) -> Self {
         let mut transposed_data = vec![0.0; self.shape.0 * self.shape.1];
         for i in 0..self.shape.0 {
             for j in 0..self.shape.1 {

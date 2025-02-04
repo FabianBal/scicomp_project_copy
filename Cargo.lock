@@ -2438,6 +2438,7 @@ dependencies = [
  "gpu",
  "matrix_base",
  "tokio",
+ "wgpu",
 ]
 
 [[package]]

@@ -12,7 +12,7 @@ pub mod dense;
 
 use wgpu::{util::DeviceExt, Adapter, Device, Instance, Queue};
 use futures_intrusive::channel::shared::oneshot_channel;
-
+use wgpu::core::device::DeviceDescriptor;
 use matrix_base::{COO, CSR};
 
 
@@ -52,12 +52,23 @@ pub fn size_prediction(A: &CSR, B: &CSR) -> usize {
 
 
 impl WgpuTask {
-    pub async fn new() -> Self {
+    pub async fn new(limit: u64) -> Self {
+        let limits = wgpu::Limits {
+                //max_storage_buffer_binding_size: limit, // 1 GB
+                max_buffer_size: limit,
+                ..wgpu::Limits::default() // Andere Limits beibehalten
+            };
+            let device_descriptor = wgpu::DeviceDescriptor{
+                label: Some("GPU Device"),
+                required_features: wgpu::Features::empty(),
+                required_limits: limits,
+                memory_hints: wgpu::MemoryHints::Performance
 
+            };
         let instance = wgpu::Instance::default();
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
-        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default(), None).await.unwrap();
-
+        let (device, queue) = adapter.request_device(&device_descriptor, None).await.unwrap();
+        //println!("device-limts: {:#?}", device.limits());
 
         WgpuTask{instance, adapter, device, queue}
     }
