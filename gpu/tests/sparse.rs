@@ -63,7 +63,9 @@ async fn test_wgpu_sparse() {
 
         let mut gpusm = GPUSparseMultiplyer::new(&A, &B, batch_size, WgpuTask::new(300*1024*1024).await).await;
         gpusm.create_and_load_buffer();
-        let mut res = gpusm.doit().await;        
+        // let mut res = gpusm.doit().await;        
+        gpusm.doit().await;        
+        let mut res = gpusm.cast_result().expect("casting result failed");
         let C_test =res.to_dense();
 
 

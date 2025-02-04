@@ -22,7 +22,8 @@ pub struct GPUSparseMultiplyer {
     pub buffer_res: Option<ResultBuffer>,
     pub buffer_res_staging: Option<ResultBuffer>,
     pub nnz_pred: usize,
-    pub n_disps: usize
+    pub n_disps: usize,
+    pub result: Option<(Vec<GlobDataEntry>, usize)>
 
 }
 
@@ -70,7 +71,7 @@ impl<'a> GPUSparseMultiplyer{
         let a = GPUCSR::new(&a);
         let b = GPUCSR::new(&b);
         
-        GPUSparseMultiplyer{wgpu_task, a, b, shader, batch_size, bind_groups: None, bind_group_layouts: None, buffer_res: None, buffer_res_staging: None, nnz_pred, n_disps}
+        GPUSparseMultiplyer{wgpu_task, a, b, shader, batch_size, bind_groups: None, bind_group_layouts: None, buffer_res: None, buffer_res_staging: None, nnz_pred, n_disps, result: None}
     }
 
 
@@ -127,7 +128,7 @@ impl<'a> GPUSparseMultiplyer{
 
 
     // pub async fn doit(&self) -> (usize, GlobDataEntry) {
-    pub async fn doit(&self) -> COO {
+    pub async fn doit(&mut self) {
         let msg = "No Bind group (layout) found";
 
         let device = &self.wgpu_task.device;
@@ -207,23 +208,33 @@ impl<'a> GPUSparseMultiplyer{
         let result: &[GlobDataEntry] = bytemuck::cast_slice(&data_result_idx);
 
 
-
+        self.result = Some((Vec::from(result), n_c_data));
         
 
         // let results = Vec::from(result);
         // let gd = result[0];
 
-        let data_final: Vec<(usize, usize, f64)> = result[..n_c_data].into_iter().map(|entry| (entry.i as usize, entry.j as usize, entry.x as f64)).collect();
+        // let data_final: Vec<(usize, usize, f64)> = result[..n_c_data].into_iter().map(|entry| (entry.i as usize, entry.j as usize, entry.x as f64)).collect();
         
         
         
         // let data_final: Vec<(usize, usize, f64)> = result[..].into_iter().map(|entry| (entry.i as usize, entry.j as usize, entry.x as f64)).collect();
         // println!("DEB {:?}", data_final);
 
-        COO {data: data_final, shape: (self.a.shape.0 as usize, self.b.shape.1 as usize)}
+        // COO {data: data_final, shape: (self.a.shape.0 as usize, self.b.shape.1 as usize)}
 
         // (n_c_data as usize, gd)
 
     }
+    
+    pub fn cast_result(&self) -> Option<COO> {
+        match &self.result {
+            Some((r, n_c_data )) => {
+                let data_final: Vec<(usize, usize, f64)> = r[..*n_c_data].into_iter().map(|entry| (entry.i as usize, entry.j as usize, entry.x as f64)).collect();
+                Some(COO {data: data_final, shape: (self.a.shape.0 as usize, self.b.shape.1 as usize)})
+            },
+            None => None
+        }
+    }    
 
 }

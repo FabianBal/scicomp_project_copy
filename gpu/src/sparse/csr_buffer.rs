@@ -15,6 +15,7 @@ pub struct GPUCSR {
 }
 
 
+// Type-specific CSR matrix
 pub struct CSRBuffer {
     pub row_pos: Buffer,
     pub col_pos: Buffer,
