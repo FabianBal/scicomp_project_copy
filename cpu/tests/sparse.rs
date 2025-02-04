@@ -41,23 +41,23 @@ fn test_product_csr() {
         println!("Testing k={}", k);
         
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
-        let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let a = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_B.mtx", k)));
-        let B = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let b = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_C.mtx", k)));
-        let C = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let c = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
 
-        let A = CSR::from_coo(A);
-        let B = CSR::from_coo(B);
-        let C = C.to_dense();
+        let a = CSR::from_coo(&a);
+        let b = CSR::from_coo(&b);
+        let c = c.to_dense();
         
-        let C_test = A.product(&B);
+        let c_test = a.product(&b);
 
-        C.print();
-        C_test.print();
+        c.print();
+        c_test.print();
 
 
-        assert!(cmp_dense(&C, &C_test, eps));
+        assert!(cmp_dense(&c, &c_test, eps));
     }
     
     
@@ -77,23 +77,23 @@ fn test_product_csr_sparse() {
         println!("Testing k={}", k);
 
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
-        let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let a = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_B.mtx", k)));
-        let B = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let b = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_C.mtx", k)));
-        let C = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let c = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
 
-        let A = CSR::from_coo(A);
-        let B = CSR::from_coo(B);
-        let C = C.to_dense();
+        let a = CSR::from_coo(&a);
+        let b = CSR::from_coo(&b);
+        let c = c.to_dense();
         
-        let C_test = A.product_sparse(&B).to_dense();
+        let c_test = a.product_sparse(&b).to_dense();
 
-        C.print();
-        C_test.print();
+        // C.print();
+        // C_test.print();
 
 
-        assert!(cmp_dense(&C, &C_test, eps));
+        assert!(cmp_dense(&c, &c_test, eps));
     }
     
     
@@ -111,23 +111,23 @@ fn test_product_csr_sparse_par() {
         println!("Testing k={}", k);
 
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
-        let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let a = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_B.mtx", k)));
-        let B = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let b = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_C.mtx", k)));
-        let C = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let c = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
 
-        let A = CSR::from_coo(A);
-        let B = CSR::from_coo(B);
-        let C = C.to_dense();
+        let a = CSR::from_coo(&a);
+        let b = CSR::from_coo(&b);
+        let c = c.to_dense();
         
-        let C_test = A.product_sparse_par(&B).to_dense();
+        let c_test = a.product_sparse_par(&b).to_dense();
 
-        C.print();
-        C_test.print();
+        // C.print();
+        // C_test.print();
 
 
-        assert!(cmp_dense(&C, &C_test, eps));
+        assert!(cmp_dense(&c, &c_test, eps));
     }
     
     
@@ -146,23 +146,23 @@ fn test_product_csr_sparse_to_coo_par() {
         println!("Testing k={}", k);
 
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
-        let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let a = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_B.mtx", k)));
-        let B = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let b = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_C.mtx", k)));
-        let C = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let c = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
 
-        let A = CSR::from_coo(A);
-        let B = CSR::from_coo(B);
-        let C = C.to_dense();
+        let a = CSR::from_coo(&a);
+        let b = CSR::from_coo(&b);
+        let c = c.to_dense();
         
-        let C_test = A.product_sparse_to_coo_par(&B).to_dense();
+        let c_test = a.product_sparse_to_coo_par(&b).to_dense();
 
-        C.print();
-        C_test.print();
+        // C.print();
+        // C_test.print();
 
 
-        assert!(cmp_dense(&C, &C_test, eps));
+        assert!(cmp_dense(&c, &c_test, eps));
         // assert!(false);
     }
     
