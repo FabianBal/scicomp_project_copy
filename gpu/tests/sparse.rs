@@ -2,6 +2,7 @@
 use std::path::Path;
 
 use gpu::sparse::*;
+use gpu::WgpuTask;
 use matrix_base::{Dense, COO, CSR};
 
 // Im Endeffekt etwas umständlich über Path joinen.
@@ -60,7 +61,7 @@ async fn test_wgpu_sparse() {
         
 
 
-        let mut gpusm = GPUSparseMultiplyer::new(A, B, batch_size).await;
+        let mut gpusm = GPUSparseMultiplyer::new(&A, &B, batch_size, WgpuTask::new(300*1024*1024).await).await;
         gpusm.create_and_load_buffer();
         let mut res = gpusm.doit().await;        
         let C_test =res.to_dense();

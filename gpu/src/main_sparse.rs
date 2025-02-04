@@ -29,7 +29,8 @@ async fn main() {
     let b = CSR::from_coo(b);
 
 
-    let mut gpusm = GPUSparseMultiplyer::new(a, b, batch_size).await;
+
+    let mut gpusm = GPUSparseMultiplyer::new(&a, &b, batch_size, WgpuTask::new(300*1024*1024).await).await;
     gpusm.create_and_load_buffer();
     // let (n_c_data, gd) = gpusm.doit().await;
     let mut res = gpusm.doit().await;
