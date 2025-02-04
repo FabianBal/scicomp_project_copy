@@ -49,15 +49,15 @@ async fn test_wgpu_sparse() {
         // COO::read_mtx(Path::new("../../matrix_instances/generated/case_0000_A.mtx"), true).expect("Failed reading matrix file.");
 
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_A.mtx", k)));
-        let A = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let a = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_B.mtx", k)));
-        let B = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let b = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
         let fname = Path::new(DATA_PATH).join(&Path::new(&format!("generated/case_{:04}_C.mtx", k)));
-        let C = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
+        let c = COO::read_mtx(&fname, true).expect("Failed reading matrix during test");
 
-        let A = CSR::from_coo(A);
-        let B = CSR::from_coo(B);
-        let C = C.to_dense();
+        let A = CSR::from_coo(&a);
+        let B = CSR::from_coo(&b);
+        let C = c.to_dense();
         
 
 

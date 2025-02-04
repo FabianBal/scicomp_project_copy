@@ -23,10 +23,14 @@ async fn main() {
     let batch_size =4;
 
 
-    let a = COO::read_mtx(Path::new("matrix_instances/generated/case_0001_A.mtx"), true).expect("Failed reading matrix file.");
-    let a = CSR::from_coo(a); 
-    let b = COO::read_mtx(Path::new("matrix_instances/generated/case_0001_B.mtx"), true).expect("Failed reading matrix file.");
-    let b = CSR::from_coo(b);
+    // let a = COO::read_mtx(Path::new("matrix_instances/generated/case_0001_A.mtx"), true).expect("Failed reading matrix file.");
+    // let a = COO::read_mtx(Path::new("matrix_instances/generated/sparse/sparse_100_A.mtx"), true).expect("Failed reading matrix file.");
+    let a = COO::read_mtx(Path::new("matrix_instances/generated/sparse_vs_dense/sparse_vs_dense_0.1_A.mtx"), true).expect("Failed reading matrix file.");
+    let a = CSR::from_coo(&a); 
+    // let b = COO::read_mtx(Path::new("matrix_instances/generated/case_0001_B.mtx"), true).expect("Failed reading matrix file.");
+    let b = COO::read_mtx(Path::new("matrix_instances/generated/sparse/sparse_100_B.mtx"), true).expect("Failed reading matrix file.");
+    let b = COO::read_mtx(Path::new("matrix_instances/generated/sparse_vs_dense/sparse_vs_dense_0.1_B.mtx"), true).expect("Failed reading matrix file.");
+    let b = CSR::from_coo(&b);
 
 
 
@@ -34,6 +38,8 @@ async fn main() {
     gpusm.create_and_load_buffer();
     // let (n_c_data, gd) = gpusm.doit().await;
     // let mut res = gpusm.doit().await;
+    let nnz_pred = gpusm.nnz_pred;
+    println!("Size pred: {}", nnz_pred);
     gpusm.doit().await;
     let mut res = gpusm.cast_result().expect("Casting result failed"); 
     // let res = res.to_dense();

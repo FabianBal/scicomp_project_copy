@@ -36,7 +36,8 @@ impl<'a> GPUSparseMultiplyer{
         let device = &wgpu_task.device;
 
         let nnz_pred = size_prediction(&a, &b);
-        
+
+        // let nnz_pred =0;
 
         // Load Shader
         let n_disps = (a.shape.0 as f64 / batch_size as f64).ceil() as usize;
@@ -78,6 +79,11 @@ impl<'a> GPUSparseMultiplyer{
     pub fn create_and_load_buffer(&mut self) {
         let device = &self.wgpu_task.device;
         let nnz_pred = self.nnz_pred;
+
+        if nnz_pred == 0 {
+            println!("WARNING: Result matrix 0. Skipping.");
+            return;
+        }
 
         // Create Buffer for CSR Matrix Data 
 
@@ -129,6 +135,11 @@ impl<'a> GPUSparseMultiplyer{
 
     // pub async fn doit(&self) -> (usize, GlobDataEntry) {
     pub async fn doit(&mut self) {
+        if self.nnz_pred == 0 {
+            println!("WARNING: Result matrix 0. Skipping.");
+            return;
+        }
+
         let msg = "No Bind group (layout) found";
 
         let device = &self.wgpu_task.device;
@@ -228,6 +239,10 @@ impl<'a> GPUSparseMultiplyer{
     }
     
     pub fn cast_result(&self) -> Option<COO> {
+        if self.nnz_pred == 0 {
+            println!("WARNING: Result matrix 0. Skipping.");
+            return None;
+        }
         match &self.result {
             Some((r, n_c_data )) => {
                 let data_final: Vec<(usize, usize, f64)> = r[..*n_c_data].into_iter().map(|entry| (entry.i as usize, entry.j as usize, entry.x as f64)).collect();
