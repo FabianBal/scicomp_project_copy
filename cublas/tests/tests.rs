@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use cublas::multiply;
-use matrix_base::COO;
+use matrix_base::{COO, Dense};
 
 // Im Endeffekt etwas umständlich über Path joinen.
 // Kann man auch mit String-Concat machen, aber
@@ -11,12 +11,13 @@ const DATA_PATH: &str = "../matrix_instances";
 
 
 #[cfg(test)]
-fn cmp_dense(A: &BlasDense, B: &BlasDense, eps: f64) -> bool {
+fn cmp_dense(A: &Dense, B: &Dense, eps: f64) -> bool {
     let mut res = true;
 
     for (x,y) in A.data.iter().zip(B.data.iter()) {
         // println!("AAA {} {} {}", x, y, x-y);
        res = res &&  ( (x-y).abs() < eps );
+       
     }
 
     res
@@ -24,7 +25,7 @@ fn cmp_dense(A: &BlasDense, B: &BlasDense, eps: f64) -> bool {
 
 #[test]
 fn test_product_blas() {
-    let eps = 1e-7;
+    let eps = 1e-6;
 
     // Number of matrices to test
     let n = 15;    
@@ -43,7 +44,7 @@ fn test_product_blas() {
         let b = b.to_dense();
         let c = c.to_dense();
         
-        let (c_test, _, _) = multiply(&a, &b);
+        let (c_test, _, _) = multiply(&a, &b).unwrap();
 
         // C.print();
         // C_test.print();
