@@ -48,11 +48,15 @@ fn main() {
     // Benchmark all possible combinations of matrices
     for matrix1_path in &matrix_paths {
         for matrix2_path in &matrix_paths {
+            // do not multiply matrix with itself
+            if matrix1_path == matrix2_path{
+                continue;
+            }
+
             // Make sure that the matrices are compatible
             if get_matrix_shape(matrix1_path).1 == get_matrix_shape(matrix2_path).0 {
                 let matrix1_name = matrix1_path.file_name().unwrap().to_str().unwrap();
                 let matrix2_name = matrix2_path.file_name().unwrap().to_str().unwrap();
-                print!("{:<20}{:<20}", matrix1_name.chars().take(20-1).collect::<String>(), matrix2_name.chars().take(20-1).collect::<String>());
                 let avg_times = benchmark_matrix(matrix1_path, matrix2_path, repeat_count);
 
                 // generate table rows
@@ -97,8 +101,13 @@ fn import_matrix(matrix_path: &Path) -> (Dense, CSR, COO) {
 
 // Benchmark matrix multiplication
 fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usize) -> Vec<(u128, u128, u128)> {
+    // Import matrices
     let (matrix1_dense, matrix1_csr, matrix1_coo) = import_matrix(matrix1_path);
+    print!("{:<20}", matrix1_path.file_name().unwrap().to_str().unwrap().chars().take(20-1).collect::<String>());
+    stdout().flush().unwrap();
     let (matrix2_dense, matrix2_csr, matrix2_coo) = import_matrix(matrix2_path);
+    print!("{:<20}", matrix2_path.file_name().unwrap().to_str().unwrap().chars().take(20-1).collect::<String>());
+    stdout().flush().unwrap();
 
     // save times for each library in format (multiply_time, overhead_time, total_time)
     let mut times_cpu_dense_parallel = Vec::with_capacity(repeat_count);
