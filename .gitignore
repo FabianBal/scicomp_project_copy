@@ -2,3 +2,4 @@ target
 .vscode
 .venv
 matrix_instances/generated/*
+output/*
