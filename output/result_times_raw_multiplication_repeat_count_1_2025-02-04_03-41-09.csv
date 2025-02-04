@@ -1,3 +1,0 @@
-Matrix1,Matrix2,cuBlas (µs),cuSparse (µs),gpuDense (µs),gpuSparse (µs),Blas (µs),cpuSparseParallel (µs),cpuDenseParallel (µs)
-b_blas.mtx,b_blas.mtx,1415,565,0,0,497,2287,184
-b_blas.mtx,a002.mtx,59,572,0,0,5,219,146

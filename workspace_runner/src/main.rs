@@ -80,7 +80,7 @@ fn main() {
     let mut file_raw_multiplication = File::create(&output_filename_raw_multiplication).expect("Failed to create output file");
     let mut file_overhead = File::create(&output_filename_overhead).expect("Failed to create output file");
     let mut file_total = File::create(&output_filename_total).expect("Failed to create output file");
-    for index in 0..results.len() {
+    for index in 0..results[0].len() {
         writeln!(file_raw_multiplication, "{}", results[0][index]).expect("Failed to write to raw multiplication output file");
         writeln!(file_overhead, "{}", results[1][index]).expect("Failed to write to overhead output file");
         writeln!(file_total, "{}", results[2][index]).expect("Failed to write to total output file");
@@ -146,7 +146,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let mut time_total = 0;
         let _matrix_dense: Vec<f32>;
         //-----------------------------------------broken part without this it works xD
-        // (_matrix_dense, time_raw_multiply, time_total) = gpu::dense::multiply_for_benchmark(&matrix1_dense, &matrix2_dense, 1000*1000*1000);
+        (_matrix_dense, time_raw_multiply, time_total) = gpu::dense::multiply_for_benchmark(&matrix1_dense, &matrix2_dense, 1000*1000*1000);
         //-----------------------------------------end broken part
         times_gpu_dense.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
@@ -159,14 +159,14 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let start_total = std::time::Instant::now();
         let mut time_raw_multiply= 0;
         //-----------------------------------------broken part without this it works xD
-        // let multiply_future = async {
-        //     let mut gpusm = gpu::GPUSparseMultiplyer::new(&matrix1_csr, &matrix2_csr, batch_size, WgpuTask::new(1000*1000*1000).await).await;
-        //     gpusm.create_and_load_buffer();
-        //     let start_raw_multiply = std::time::Instant::now();
-        //     let _res = gpusm.doit().await;
-        //     time_raw_multiply = start_raw_multiply.elapsed().as_micros();
-        // };
-        // tokio::runtime::Runtime::new().unwrap().block_on(multiply_future);
+        let multiply_future = async {
+            let mut gpusm = gpu::GPUSparseMultiplyer::new(&matrix1_csr, &matrix2_csr, batch_size, WgpuTask::new(1000*1000*1000).await).await;
+            gpusm.create_and_load_buffer();
+            let start_raw_multiply = std::time::Instant::now();
+            let _res = gpusm.doit().await;
+            time_raw_multiply = start_raw_multiply.elapsed().as_micros();
+        };
+        tokio::runtime::Runtime::new().unwrap().block_on(multiply_future);
         //-----------------------------------------end broken part
         let time_total = start_total.elapsed().as_micros();
         times_gpu_sparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
@@ -234,6 +234,7 @@ fn get_matrix_paths(folder_path: &str) -> Vec<PathBuf> {
             matrix_paths.push(file_path);
         }
     }
+    matrix_paths.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
     matrix_paths
 }
 
