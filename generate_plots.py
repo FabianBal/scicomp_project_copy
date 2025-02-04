@@ -29,7 +29,7 @@ plt.figure(figsize=(10, 10))
 # Plot data for each method
 for method in methods:
     plt.plot(sizes, df_grouped[method], marker='o', label=method)
-
+    
 # plt.xscale('log')
 plt.yscale('log')
 plt.xlabel('Matrix Size')
@@ -50,7 +50,7 @@ plt.show()
 # Show the plot
 plt.show()
 output_filename = "/".join(filename.split("/")[:-1]) + "/plots/" + filename.split("/")[-1].replace(".csv", ".svg")
-plt.savefig(output_filename, format="svg")
+plt.savefig(output_filename, format="svg", bbox_inches='tight')
 
 output_filename = "/".join(filename.split("/")[:-1]) + "/plots/" + filename.split("/")[-1].replace(".csv", "")
-plt.savefig(output_filename)
+plt.savefig(output_filename, bbox_inches='tight')
