@@ -1,9 +1,7 @@
-use core::time;
-use std::{env, fmt::write, fs::{self, File}, io::{stdout, BufRead, Write}, os::unix::raw::time_t, path::{Path, PathBuf}, vec};
+use std::{cmp::{max, min}, env, fs::{self, File}, io::{stdout, BufRead, Write}, path::{Path, PathBuf}};
 use matrix_base::{COO, CSR, Dense};
 use fakscpu::{dense::DenseProd, sparse::SparseProd};
-use wgpu::{BindGroup, BindGroupLayout, ShaderModel, ShaderModule};
-use gpu::{size_prediction, WgpuTask};
+use gpu::WgpuTask;
 
 /// Benchmark matrix multiplication using different libraries
 /// load all matrices from provided folder path or default and benchmark all possible combinations
@@ -53,6 +51,11 @@ fn main() {
                 continue;
             }
 
+            // // do only multiply matrices with the same sparsity
+            // if matrix1_path.file_name().unwrap().to_str().unwrap().split("_").collect::<Vec<&str>>()[1] != matrix2_path.file_name().unwrap().to_str().unwrap().split("_").collect::<Vec<&str>>()[1] {
+            //     continue;
+            // }
+
             // Make sure that the matrices are compatible
             if get_matrix_shape(matrix1_path).1 == get_matrix_shape(matrix2_path).0 {
                 let matrix1_name = matrix1_path.file_name().unwrap().to_str().unwrap();
@@ -78,9 +81,9 @@ fn main() {
     println!("\n\n{}\n\n{}", overhead_table, multiplication_table);
 
     //generate output files
-    let output_filename_raw_multiplication = format!("./output/{}_result_times_raw_multiplication_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
-    let output_filename_overhead = format!("./output/{}_result_times_overhead_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
-    let output_filename_total = format!("./output/{}_result_times_total_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
+    let output_filename_raw_multiplication = format!("./output/data/{}_result_times_raw_multiplication_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
+    let output_filename_overhead = format!("./output/data/{}_result_times_overhead_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
+    let output_filename_total = format!("./output/data/{}_result_times_total_repeat_count_{}.csv", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"), repeat_count);
     let mut file_raw_multiplication = File::create(&output_filename_raw_multiplication).expect("Failed to create output file");
     let mut file_overhead = File::create(&output_filename_overhead).expect("Failed to create output file");
     let mut file_total = File::create(&output_filename_total).expect("Failed to create output file");
@@ -118,27 +121,13 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
     let mut times_gpu_sparse = Vec::with_capacity(repeat_count);
     let mut times_blas = Vec::with_capacity(repeat_count);
 
-    // let limits = wgpu::Limits {
-    //     max_storage_buffer_binding_size: 1024 * 1024 * 1024, // 1 GB
-    //     ..wgpu::Limits::default() // Andere Limits beibehalten
-    // };
-    
-    // let device_descriptor = wgpu::DeviceDescriptor{
-    //     label: Some("GPU Device"),
-    //     required_features: wgpu::Features::empty(),
-    //     required_limits: limits,
-    //     memory_hints: wgpu::MemoryHints::Performance
-    
-    // };
-
-
     // run benchmark for each library
     //cuBLAS
     for _ in 1..=repeat_count {
         let (_matrix, time_raw_multiply, time_total) = cublas::multiply(&matrix1_dense, &matrix2_dense).unwrap();
         times_cublas.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
-    print!("{:<15}", times_cublas.iter().map(|&(_, _, total)| total).sum::<u128>() / repeat_count as u128);
+    print!("{:<15}", times_cublas.iter().map(|&(_, _, total)| total).min().unwrap_or(0));
     stdout().flush().unwrap();
     
     //cuSPARSE
@@ -146,7 +135,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let (_matrix, time_raw_multiply, time_total) = cusparse::multiply(&matrix1_csr, &matrix2_csr).unwrap();
         times_cusparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
-    print!("{:<15}", times_cusparse.iter().map(|&(_, _, total)| total).sum::<u128>() / repeat_count as u128);
+    print!("{:<15}", times_cusparse.iter().map(|&(_, _, total)| total).min().unwrap_or(0));
     stdout().flush().unwrap();
     
     //GPU Dense Parallel
@@ -159,7 +148,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         //-----------------------------------------end broken part
         times_gpu_dense.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
-    print!("{:<15}", times_gpu_dense.iter().map(|&(_, _, total)| total).sum::<u128>() / repeat_count as u128);
+    print!("{:<15}", times_gpu_dense.iter().map(|&(_, _, total)| total).min().unwrap_or(0));
     stdout().flush().unwrap();
 
     //GPU Sparse
@@ -195,7 +184,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let time_total = start.elapsed().as_micros();
         times_blas.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
-    print!("{:<15}", times_blas.iter().map(|&(_, _, total)| total).sum::<u128>() / times_blas.len() as u128);
+    print!("{:<15}", times_blas.iter().map(|&(_, _, total)| total).min().unwrap_or(0));
     stdout().flush().unwrap();
     
     //CPU Sparse Parallel
@@ -205,7 +194,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let time_total = start.elapsed().as_micros();
         times_cpu_sparse_parallel.push((time_total - 0, 0, time_total));
     }
-    print!("{:<25}", times_cpu_sparse_parallel.iter().map(|&(_, _, total)| total).sum::<u128>() / times_cpu_sparse_parallel.len() as u128);
+    print!("{:<25}", times_cpu_sparse_parallel.iter().map(|&(_, _, total)| total).min().unwrap_or(0));
     stdout().flush().unwrap();
     
     //CPU Dense Parallel
@@ -215,15 +204,17 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         let time_total = start.elapsed().as_micros();
         times_cpu_dense_parallel.push((time_total - 0, 0, time_total));
     }
-    print!("{:<25}", times_cpu_dense_parallel.iter().map(|&(_, _, total)| total).sum::<u128>() / times_cpu_dense_parallel.len() as u128);
+    print!("{:<25}", times_cpu_dense_parallel.iter().map(|&(_, _, total)| total).min().unwrap_or(0));
     stdout().flush().unwrap();
     println!();
 
     // Calculate average times
     let times_vec: Vec<Vec<(u128, u128, u128)>> = vec![times_cublas, times_cusparse, times_gpu_dense, times_gpu_sparse, times_blas, times_cpu_sparse_parallel, times_cpu_dense_parallel];
-    let sum_times: Vec<(u128, u128, u128)> = times_vec.into_iter().map(|times| times.iter().fold((0, 0, 0), |acc, time| (acc.0 + time.0, acc.1 + time.1, acc.2 + time.2))).collect();
-    let avg_times: Vec<(u128, u128, u128)> = sum_times.iter().map(|sum_time| (sum_time.0 / repeat_count as u128, sum_time.1 / repeat_count as u128, sum_time.2 / repeat_count as u128)).collect();
-    avg_times
+    let min_times: Vec<(u128, u128, u128)> = times_vec.into_iter().map(|times| times.iter().fold((u128::max_value(), u128::max_value(), u128::max_value()), |acc, time| (max(1, min(acc.0, time.0)), max(1,min(acc.1, time.1)), max(1,min(acc.2, time.2))))).collect();
+    min_times
+    // let sum_times: Vec<(u128, u128, u128)> = times_vec.into_iter().map(|times| times.iter().fold((0, 0, 0), |acc, time| (acc.0 + time.0, acc.1 + time.1, acc.2 + time.2))).collect();
+    // let avg_times: Vec<(u128, u128, u128)> = sum_times.iter().map(|sum_time| (sum_time.0 / repeat_count as u128, sum_time.1 / repeat_count as u128, sum_time.2 / repeat_count as u128)).collect();
+    // avg_times
 }
 
 // Returns all paths to matrices inside folder_path
