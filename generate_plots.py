@@ -2,13 +2,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sys
 
+import os
+
 filename = sys.argv[1]
 # Load the CSV file
 df = pd.read_csv(filename)
 
 # Extract matrix sizes from filenames
 def extract_size(matrix_name):
-    return int(matrix_name.split('_')[1])
+    return float(matrix_name.split('_')[1])
 
 df['Size'] = df['Matrix1'].apply(extract_size)
 
@@ -49,8 +51,11 @@ plt.show()
 
 # Show the plot
 plt.show()
-output_filename = "/".join(filename.split("/")[:-1]) + "/plots/" + filename.split("/")[-1].replace(".csv", ".svg")
+
+if not os.path.exists("/".join(filename.split("/")[:-2]) + "/plots/"):
+    os.makedirs("/".join(filename.split("/")[:-2]) + "/plots/")
+output_filename = "/".join(filename.split("/")[:-2]) + "/plots/" + filename.split("/")[-1].replace(".csv", ".svg")
 plt.savefig(output_filename, format="svg", bbox_inches='tight')
 
-output_filename = "/".join(filename.split("/")[:-1]) + "/plots/" + filename.split("/")[-1].replace(".csv", "")
+output_filename = "/".join(filename.split("/")[:-2]) + "/plots/" + filename.split("/")[-1].replace(".csv", "")
 plt.savefig(output_filename, bbox_inches='tight')
