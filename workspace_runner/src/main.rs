@@ -122,7 +122,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
     let mut times_blas = Vec::with_capacity(repeat_count);
 
     // run benchmark for each library
-    //cuBLAS
+    // cuBLAS (Dense)
     for _ in 1..=repeat_count {
         let (_matrix, time_raw_multiply, time_total) = cublas::multiply(&matrix1_dense, &matrix2_dense).unwrap();
         times_cublas.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
@@ -173,7 +173,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
     print!("{:<15}", times_gpu_sparse.iter().map(|&(_, _, total)| total).sum::<u128>() / times_gpu_sparse.len() as u128);
     stdout().flush().unwrap();
 
-    //BLAS
+    //BLAS (Dense)
     for _ in 1..=repeat_count {
         let start = std::time::Instant::now();
         let a = blas_dense::BlasDense::from_coo(&matrix1_coo);

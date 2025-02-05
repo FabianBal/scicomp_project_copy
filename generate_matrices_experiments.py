@@ -17,24 +17,24 @@ pfad = "matrix_instances/generated"
 
 
 ### Anzahl der Exemplare
-number_of_examples = 3
+number_of_examples = 2
 
 ### DENSE
 # Größe variieren
-sizes_dense = [x for x in range(10,501, 10)] # Dimensionen
+sizes_dense = [1] # Dimensionen
 
 
 ## SPARSE
 # Größe variieren
-sparsity = 2 # Fixe Sparsity
-sizes_sparse = list(range(10, 501, 10)) # Dimensionen
+sparsity = 0.01 # Fixe Sparsity
+sizes_sparse = [1] # Dimensionen
 sizes_sparse.sort()
 
 
 ## DENSE vs SPARSE
 # Sparsity variieren
-sparsities = [0.05, 0.1, 0.2, 0.3, 0.4, 0.7]
-size_sparse_vs_dense = 1000 #  Fixe Dimension
+sparsities = [0.01] # Sparsity
+size_sparse_vs_dense = 2000 # Fixe Dimension
 
 
 ########### PARAMETER ENDE
@@ -83,7 +83,7 @@ for example_count in range(0, number_of_examples):
         fname_B = join(pfad, "sparse", "sparse_" + str(n) + "_B" + example_count + ".mtx")
         
         with open(fname_A, "w") as f:
-            N = int(n*sparsity) #  Anzahl Einträge gesamt
+            N = int(n*n*sparsity) #  Anzahl Einträge gesamt
             f.write("%d %d %d\n" % (n, n, N))
             
             for _ in range(0, N):
@@ -93,7 +93,7 @@ for example_count in range(0, number_of_examples):
                 f.write("%d %d %.20f\n" %(i+1,j+1,x))
                 
         with open(fname_B, "w") as f:
-            N = int(n*sparsity) #  Anzahl Einträge gesamt
+            N = int(n*n*sparsity) #  Anzahl Einträge gesamt
             f.write("%d %d %d\n" % (n, n, N))
             
             for _ in range(0, N):
@@ -107,13 +107,13 @@ for example_count in range(0, number_of_examples):
     for spa in sparsities:
         # Paths
         Path(join(pfad, "sparse-vs-dense")).mkdir(parents=True, exist_ok=True)
-        fname_A = join(pfad, "sparse-vs-dense", "sparse-vs-dense_" + str(spa) + "_A" + example_count + ".mtx")
-        fname_B = join(pfad, "sparse-vs-dense", "sparse-vs-dense_" + str(spa) + "_B" + example_count + ".mtx")
+        fname_A = join(pfad, "sparse-vs-dense", "s-vs-d_" + str(spa) + "_A" + example_count + ".mtx")
+        fname_B = join(pfad, "sparse-vs-dense", "s-vs-d_" + str(spa) + "_B" + example_count + ".mtx")
         
         n = size_sparse_vs_dense
         
         with open(fname_A, "w") as f:
-            N = int(size_sparse_vs_dense*spa) #  Anzahl Einträge gesamt
+            N = int(size_sparse_vs_dense*size_sparse_vs_dense*spa) #  Anzahl Einträge gesamt
             f.write("%d %d %d\n" % (n, n, N))
             
             for _ in range(0, N):
@@ -123,7 +123,7 @@ for example_count in range(0, number_of_examples):
                 f.write("%d %d %.20f\n" %(i+1,j+1,x))
                 
         with open(fname_B, "w") as f:
-            N = int(size_sparse_vs_dense*spa) #  Anzahl Einträge gesamt
+            N = int(size_sparse_vs_dense*size_sparse_vs_dense*spa) #  Anzahl Einträge gesamt
             f.write("%d %d %d\n" % (n, n, N))
             
             for _ in range(0, N):
