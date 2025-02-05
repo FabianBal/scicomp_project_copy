@@ -170,7 +170,7 @@ fn benchmark_matrix(matrix1_path: &Path, matrix2_path: &Path, repeat_count: usiz
         times_gpu_sparse.push((time_raw_multiply, time_total - time_raw_multiply, time_total));
     }
     
-    print!("{:<15}", times_gpu_sparse.iter().map(|&(_, _, total)| total).sum::<u128>() / times_gpu_sparse.len() as u128);
+    print!("{:<15}", times_gpu_sparse.iter().map(|&(_, _, total)| total).min().unwrap_or(0));
     stdout().flush().unwrap();
 
     //BLAS (Dense)

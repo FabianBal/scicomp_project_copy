@@ -26,12 +26,22 @@ df_grouped = df.groupby('Size')[numeric_cols].mean().sort_index(ascending=False)
 sizes = df_grouped.index
 methods = ['cuBlas (µs)', 'cuSparse (µs)', 'gpuDense (µs)', 'gpuSparse (µs)', 'Blas (µs)', 'cpuSparseParallel (µs)', 'cpuDenseParallel (µs)']
 
+colors = {
+    'cuBlas (µs)': '#1f77b4',  # Blau
+    'cuSparse (µs)': '#ff7f0e',  # Orange
+    'gpuDense (µs)': '#2ca02c',  # Grün
+    'gpuSparse (µs)': '#d62728',  # Rot
+    'Blas (µs)': '#999999',  # grau
+    'cpuSparseParallel (µs)': '#8c564b',  # Braun
+    'cpuDenseParallel (µs)': '#000000'  # schwarz
+}
+
 plt.figure(figsize=(10, 10))
 
-# Plot data for each method
+# Plot data for each method mit den definierten Farben
 for method in methods:
-    plt.plot(sizes, df_grouped[method], marker='o', label=method)
-    
+    plt.plot(sizes, df_grouped[method], marker='o', label=method, color=colors[method])
+ 
 # plt.xscale('log')
 plt.yscale('log')
 plt.xlabel('Matrix Size')
@@ -47,10 +57,7 @@ elif filename.find("overhead") != -1:
 plt.title('Performance Comparison: ' + title)
 plt.legend()
 # plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-plt.show()
 
-# Show the plot
-plt.show()
 
 if not os.path.exists("/".join(filename.split("/")[:-2]) + "/plots/"):
     os.makedirs("/".join(filename.split("/")[:-2]) + "/plots/")
@@ -59,3 +66,6 @@ plt.savefig(output_filename, format="svg", bbox_inches='tight')
 
 output_filename = "/".join(filename.split("/")[:-2]) + "/plots/" + filename.split("/")[-1].replace(".csv", "")
 plt.savefig(output_filename, bbox_inches='tight')
+
+# Show the plot
+plt.show()
