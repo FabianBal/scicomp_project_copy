@@ -1,8 +1,9 @@
+use cust::sys::cuStreamSynchronize;
 use matrix_base::Dense;
 use cust::memory::*;
 use cust::error::CudaResult;
 use std::ptr;
-use cublas_sys::{cublasCreate_v2, cublasDestroy_v2, cublasSgemm_v2, cublasHandle_t};
+use cublas_sys::{cublasCreate_v2, cublasDestroy_v2, cublasGetStream_v2, cublasHandle_t, cublasSgemm_v2, Struct_CUstream_st};
 
 pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<(Dense, u128, u128)> {
     let time_raw_multiply: u128;
@@ -42,6 +43,9 @@ pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<(Dense, u128, u1
 
     // Perform matrix multiplication: C = alpha * A * B + beta * C
     unsafe {
+        // Set the cuBLAS stream
+        let mut stream: *mut Struct_CUstream_st = std::ptr::null_mut();
+        cublasGetStream_v2(handle, &mut stream);
         let start = std::time::Instant::now();
         cublasSgemm_v2(
             handle,
@@ -54,6 +58,8 @@ pub fn multiply(matrix1: &Dense, matrix2: &Dense) -> CudaResult<(Dense, u128, u1
             &beta, 
             d_c.as_device_ptr().as_mut_ptr(), m,
         );
+        // synchronize stream to wait for the multiplication to finish
+        cuStreamSynchronize(stream as *mut cust::sys::CUstream_st);
         time_raw_multiply = start.elapsed().as_micros();
     }
 
