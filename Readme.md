@@ -28,20 +28,7 @@ sudo apt-get install libopenblas-dev
 This runs the benchmark once using the matrices in `./matrix_instances/`.
 
 
-## Struktur
-
-### Code
-
-`cpu`: Vergleichsimplementierung: pur CPU
-`blas`: Vergleichsimplementierung: cudaBLAS und CPU BLAS
-`gpu`: Implementierung auf GPU
-
-### Daten
-
-`matrix_instances`: Matrizen im MTX-Format, eher kleine Dateien
-`matrix_instances/generated`: Matrizen im MTX-Format, eher größere. Nicht unter Versionskontrolle
-
-## Skripte
+## Utility Scripts
 
 ### Sparse Matrix Generation
 
@@ -55,7 +42,7 @@ Der Standard-Output-Ordner kann festgelegt werden mit `--basedir=matrix_instance
 
 Wenn kein Produkt gewünscht ist, kann der `--noproduct`-Parameter angegeben werden.
 
-### Dense Matrix Generation
 
-`generate_matrices_sparse.py`: In Arbeit, bitte ignorieren.
+##
 
+Scripts for generating dense matrices, Toeplitz matrices, and the experiment series used in the report are also provided, in addition to a postprocessing script for evaluating the measurements and generating the data.

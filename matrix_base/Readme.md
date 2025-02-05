@@ -15,7 +15,7 @@ use matrix_base::{Dense, COO};
 fn main() {
     // Read MTX file into sparse COO format
     // coo is of type COO
-    let coo = COO::read_mtx("../matrix_instances/a0001.mtx", false).expect("Failed reading file");
+    let coo = COO::read_mtx("path/to/matrix.mtx", false).expect("Failed reading file");
 
     // Create dense matrix from COO matrix
     // dense is of type Dense
