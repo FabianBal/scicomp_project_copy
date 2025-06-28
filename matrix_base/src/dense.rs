@@ -1,21 +1,22 @@
-
 pub struct Dense {
     pub data: Vec<f64>,
-    pub shape: (usize, usize)
+    pub shape: (usize, usize),
 }
-
 
 impl Dense {
     pub fn new_zeros(shape: (usize, usize)) -> Self {
-        Dense{data: vec![0.;shape.0*shape.1], shape}
+        Dense {
+            data: vec![0.; shape.0 * shape.1],
+            shape,
+        }
     }
 
     pub fn get(&self, i: usize, j: usize) -> f64 {
-        self.data[self.shape.1 *i + j]
+        self.data[self.shape.1 * i + j]
     }
 
     pub fn set(&mut self, i: usize, j: usize, x: f64) {
-        self.data[self.shape.1 *i + j] = x;
+        self.data[self.shape.1 * i + j] = x;
     }
 
     pub fn print(&self) {

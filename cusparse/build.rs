@@ -1,11 +1,18 @@
 use bindgen;
 
 fn main() {
-    //adjust path to CUDA installation!
-    let cuda_path = "/usr/local/cuda-12.8";
-    // Generate bindings to CUDA's C API because no cuSPARSE rust wrapper exists as in cuBLAS
+    // Sicherstellen, dass der Pfad korrekt ist
+    let cuda_path = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6".to_string();
+
+    println!("Using CUDA path: {}", cuda_path);
+
+    // Generiere die Bindings für cuSPARSE
     let bindings = bindgen::Builder::default()
         .header(format!("{}/include/cusparse.h", cuda_path))
+        .clang_args(&[
+            format!("-I{}/include", cuda_path),
+            format!("-I{}/include/crt", cuda_path), // Falls notwendig
+        ])
         .blocklist_item("FP_NAN")
         .blocklist_item("FP_INFINITE")
         .blocklist_item("FP_ZERO")
@@ -15,18 +22,18 @@ fn main() {
         .generate()
         .expect("Unable to generate bindings");
 
-    // Write the bindings to a file
+    // Bindings in Datei schreiben
     bindings
         .write_to_file("src/bindings.rs")
         .expect("Couldn't write bindings!");
 
-    // Tell Cargo to rerun this script if the CUDA header changes
+    // Cargo anweisen, das Skript erneut auszuführen, falls sich die Header ändern
     println!("cargo:rerun-if-changed={}/include/cusparse.h", cuda_path);
 
-    // Tell Cargo to link to CUDA libraries
-    println!("cargo:rustc-link-lib=cusparse"); // Link against cusparse
-    println!("cargo:rustc-link-lib=cudart");   // Link against CUDA runtime library
+    // CUDA-Bibliotheken verlinken
+    println!("cargo:rustc-link-lib=cusparse"); // cuSPARSE
+    println!("cargo:rustc-link-lib=cudart"); // CUDA Runtime
 
-    // Specify the path to the CUDA libraries
-    println!("cargo:rustc-link-search=native={}/lib64", cuda_path);  // Modify this if your CUDA is in a different location
+    // Den richtigen Library-Pfad setzen
+    println!("cargo:rustc-link-search=native={}/lib/x64", cuda_path);
 }

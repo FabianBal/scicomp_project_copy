@@ -7,7 +7,5 @@ pub use csr_buffer::*;
 pub mod gpu_sparse_multiplyer;
 pub use gpu_sparse_multiplyer::*;
 
-
-
 // pub use CSRBuffer;
 // pub use ResultBuffer;

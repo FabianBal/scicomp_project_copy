@@ -16,7 +16,7 @@ const ROWS: i64 = 3;
 const COLS: i64 = 3;
 const NNZ: i64 = 4; // Number of non-zero elements
 
-fn main() -> CudaResult<()>{
+fn main() -> CudaResult<()> {
     // Example of using a CUDA function via bindings
     // unsafe {
     //     // Call CUDA functions directly via FFI (Foreign Function Interface)
@@ -41,9 +41,7 @@ fn main() -> CudaResult<()>{
     let h_csr_values: [f32; 4] = [1.0, 2.0, 3.0, 4.0];
 
     // Define dense matrix
-    let h_dense_matrix: [f32; 9] = [1.0, 2.0, 3.0,
-                                    4.0, 5.0, 6.0,
-                                    7.0, 8.0, 9.0];
+    let h_dense_matrix: [f32; 9] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0];
 
     // Allocate device memory
     let d_csr_row_ptr = DeviceBuffer::from_slice(&h_csr_row_ptr)?;

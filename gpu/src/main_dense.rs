@@ -1,34 +1,38 @@
-use wgpu::util::DeviceExt;
 use futures_intrusive::channel::shared::oneshot_channel;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
+use wgpu::util::DeviceExt;
 
 #[tokio::main]
 async fn main() {
     // read Matrix-Data
-    let (row_size_a, col_size_a, matrix_a) = read_mtx_file(Path::new("../matrix_instances/generated/matrix_3x4_A.mtx"));
+    let (row_size_a, col_size_a, matrix_a) =
+        read_mtx_file(Path::new("../matrix_instances/generated/matrix_3x4_A.mtx"));
     println!("Matrix-a eingelesen");
-    let (row_size_b, col_size_b, matrix_b) = read_mtx_file(Path::new("../matrix_instances/generated/matrix_4x2_B.mtx"));
+    let (row_size_b, col_size_b, matrix_b) =
+        read_mtx_file(Path::new("../matrix_instances/generated/matrix_4x2_B.mtx"));
     println!("Matrix-b eingelesen");
-    let (_row_size_c, _col_size_c, matrix_c) = read_mtx_file(Path::new("../matrix_instances/generated/matrix_3x2_C.mtx"));
+    let (_row_size_c, _col_size_c, matrix_c) =
+        read_mtx_file(Path::new("../matrix_instances/generated/matrix_3x2_C.mtx"));
     println!("Matrix-c eingelesen");
 
     // create WGPU-Instanz, Adapter und Device
     let instance = wgpu::Instance::default();
-    let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
-    let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default(), None).await.unwrap();
+    let adapter = instance
+        .request_adapter(&wgpu::RequestAdapterOptions::default())
+        .await
+        .unwrap();
+    let (device, queue) = adapter
+        .request_device(&wgpu::DeviceDescriptor::default(), None)
+        .await
+        .unwrap();
 
     // create Buffer
-    let (buffer_a, buffer_b, buffer_c, staging_buffer, matrix_a_size_buffer, matrix_b_size_buffer) = create_buffers(
-        &device,
-        &matrix_a,
-        &matrix_b,
-        row_size_a,
-        col_size_a,
-        row_size_b,
-        col_size_b,
-    );
+    let (buffer_a, buffer_b, buffer_c, staging_buffer, matrix_a_size_buffer, matrix_b_size_buffer) =
+        create_buffers(
+            &device, &matrix_a, &matrix_b, row_size_a, col_size_a, row_size_b, col_size_b,
+        );
 
     // calculate matrix/matrix
     let result = compute_matrix(
@@ -42,7 +46,8 @@ async fn main() {
         matrix_b_size_buffer,
         row_size_a,
         col_size_b,
-    ).await;
+    )
+    .await;
 
     // control result
     let are_equal = compare_matrices(&matrix_c, &result);
@@ -84,7 +89,9 @@ fn create_buffers(
     let buffer_c = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("Matrix C"),
         size: (row_size_a * col_size_b * std::mem::size_of::<f32>() as u32) as u64,
-        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC,
+        usage: wgpu::BufferUsages::STORAGE
+            | wgpu::BufferUsages::COPY_DST
+            | wgpu::BufferUsages::COPY_SRC,
         mapped_at_creation: false,
     });
 
@@ -132,7 +139,8 @@ async fn compute_matrix(
     row_size_a: u32,
     col_size_b: u32,
 ) -> Vec<f32> {
-    let shader_code = std::fs::read_to_string("./shader/matrix_mult.wgsl").expect("Shader-Datei nicht gefunden");
+    let shader_code =
+        std::fs::read_to_string("./shader/matrix_mult.wgsl").expect("Shader-Datei nicht gefunden");
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("Matrix Multiplication Shader"),
         source: wgpu::ShaderSource::Wgsl(shader_code.into()),
@@ -240,7 +248,9 @@ async fn compute_matrix(
     let dispatch_x = (col_size_b + workgroup_size - 1) / workgroup_size;
     let dispatch_y = (row_size_a + workgroup_size - 1) / workgroup_size;
 
-    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("Compute Encoder") });
+    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+        label: Some("Compute Encoder"),
+    });
 
     {
         let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
@@ -255,8 +265,16 @@ async fn compute_matrix(
 
     queue.submit(Some(encoder.finish()));
 
-    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("Copy Encoder") });
-    encoder.copy_buffer_to_buffer(&buffer_c, 0, &staging_buffer, 0, (row_size_a * col_size_b * std::mem::size_of::<f32>() as u32) as u64);
+    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+        label: Some("Copy Encoder"),
+    });
+    encoder.copy_buffer_to_buffer(
+        &buffer_c,
+        0,
+        &staging_buffer,
+        0,
+        (row_size_a * col_size_b * std::mem::size_of::<f32>() as u32) as u64,
+    );
     queue.submit(Some(encoder.finish()));
 
     let buffer_slice = staging_buffer.slice(..);
@@ -279,13 +297,22 @@ fn read_mtx_file<P: AsRef<Path>>(path: P) -> (u32, u32, Vec<f32>) {
     let reader = io::BufReader::new(file);
     let mut lines = reader.lines();
 
-    let header = lines.next().expect("Datei ist leer").expect("Fehler beim Lesen der ersten Zeile");
+    let header = lines
+        .next()
+        .expect("Datei ist leer")
+        .expect("Fehler beim Lesen der ersten Zeile");
     let header_parts: Vec<&str> = header.split_whitespace().collect();
     assert_eq!(header_parts.len(), 3, "Header hat falsches Format");
 
-    let rows: u32 = header_parts[0].parse().expect("Fehler beim Parsen der Zeilenanzahl");
-    let cols: u32 = header_parts[1].parse().expect("Fehler beim Parsen der Spaltenanzahl");
-    let _num_entries: usize = header_parts[2].parse().expect("Fehler beim Parsen der Eintragsanzahl");
+    let rows: u32 = header_parts[0]
+        .parse()
+        .expect("Fehler beim Parsen der Zeilenanzahl");
+    let cols: u32 = header_parts[1]
+        .parse()
+        .expect("Fehler beim Parsen der Spaltenanzahl");
+    let _num_entries: usize = header_parts[2]
+        .parse()
+        .expect("Fehler beim Parsen der Eintragsanzahl");
 
     let mut matrix = vec![0.0; (rows * cols) as usize];
 
@@ -294,12 +321,22 @@ fn read_mtx_file<P: AsRef<Path>>(path: P) -> (u32, u32, Vec<f32>) {
         let parts: Vec<&str> = line.split_whitespace().collect();
         assert_eq!(parts.len(), 3, "Zeilenformat ist ungültig");
 
-        let row: u32 = parts[0].parse().expect("Fehler beim Parsen der Zeilennummer");
-        let col: u32 = parts[1].parse().expect("Fehler beim Parsen der Spaltennummer");
+        let row: u32 = parts[0]
+            .parse()
+            .expect("Fehler beim Parsen der Zeilennummer");
+        let col: u32 = parts[1]
+            .parse()
+            .expect("Fehler beim Parsen der Spaltennummer");
         let value: f32 = parts[2].parse().expect("Fehler beim Parsen des Werts");
 
-        assert!(row > 0 && row <= rows, "Zeilenindex außerhalb des gültigen Bereichs");
-        assert!(col > 0 && col <= cols, "Spaltenindex außerhalb des gültigen Bereichs");
+        assert!(
+            row > 0 && row <= rows,
+            "Zeilenindex außerhalb des gültigen Bereichs"
+        );
+        assert!(
+            col > 0 && col <= cols,
+            "Spaltenindex außerhalb des gültigen Bereichs"
+        );
 
         matrix[((row - 1) * cols + (col - 1)) as usize] = value;
     }

@@ -31,22 +31,18 @@ use matrix_base::{COO, CSR};
 //         let i0 = A.row_pos[i];
 //         let i1 = A.row_pos[i+1];
 
-       
-
 //         let mut nnz_i = 0;
 //         for k in A.col_pos[i0..i1].iter() {
-//             nnz_i += B.get_row_nnz(*k); 
+//             nnz_i += B.get_row_nnz(*k);
 //             // println!("aaa {} {} {}", i, k, nnz_i);
 //         }
 //         nnzs.push(nnz_i);
 //     }
 
 //     nnzs.iter().sum()
-//     // min(nnzs.iter().sum(), m * B.shape.1) 
-//     // min(nnzs.iter().sum(), m * B.shape.1) 
+//     // min(nnzs.iter().sum(), m * B.shape.1)
+//     // min(nnzs.iter().sum(), m * B.shape.1)
 // }
-
-
 
 fn main() {
     println!("hi");
@@ -71,8 +67,6 @@ fn main() {
     //     println!("nnz({}) = {}", k, csr.get_row_nnz(k));
     // }
 
-
-
     // let fname = Path::new("../matrix_instances/generated/case_0000_A.mtx");
     let fname = Path::new("matrix_instances/generated/sparse/sparse_30_B.mtx");
     let a = COO::read_mtx(fname, true).expect(":(");
@@ -82,12 +76,11 @@ fn main() {
     // let fname = Path::new("../matrix_instances/generated/case_0000_B.mtx");
     let fname = Path::new("matrix_instances/generated/sparse/sparse_30_A.mtx");
     let b = COO::read_mtx(fname, true).expect(":(");
-    
+
     let a = CSR::from_coo(&a);
     let b = CSR::from_coo(&b);
 
     // println!("size pred  {}", size_prediction(&a, &b));
-
 
     let rescoo = a.product_sparse_to_coo_par(&b);
 
@@ -116,6 +109,4 @@ fn main() {
 
     // a002.data.sort_by(|a, b| (a.0, a.1).cmp(&(b.0, b.1)));
     // println!("{:?}", a002.data);
-
-
 }

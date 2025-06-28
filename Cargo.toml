@@ -1,4 +1,4 @@
 [workspace]
-members = ["workspace_runner", "matrix_base", "cpu", "cublas", "cusparse","gpu", "blas"]
-default-members = ["workspace_runner"]
+members = ["workspace_runner", "matrix_base", "cpu", "cublas", "cusparse","gpu", "blas", "tools", "seminar_benchmark_runner"]
+default-members = ["seminar_benchmark_runner"]
 resolver = "2"

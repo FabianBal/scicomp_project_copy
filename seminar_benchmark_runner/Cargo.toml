@@ -1,0 +1,16 @@
+[package]
+name = "benchmark_runner"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.43.0", features = ["full"] }
+matrix_base = { path = "../matrix_base" }
+cublas = {path = "../cublas"}
+cusparse = {path = "../cusparse"}
+blas_dense = { path = "../blas" }
+gpu = { path = "../gpu" }
+fakscpu = {path = "../cpu"}
+wgpu = "24.0.0"
+chrono = "0.4"
+tools = { path = "../tools" }

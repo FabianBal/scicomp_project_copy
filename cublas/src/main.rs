@@ -4,7 +4,7 @@ use cust::memory::*;
 use cust::error::CudaResult;
 use std::ptr;
 
-use cublas_sys::{cublasCreate_v2, cublasDestroy_v2, cublasSgemm_v2, cublasHandle_t};
+use cublas_sys::{cublasCreate_v2, cublasDestroy_v2, cublasHandle_t, cublasSgemm_v2};
 
 // Matrix size (NxN)
 const N: i32 = 2;
@@ -18,7 +18,6 @@ fn main() -> CudaResult<()> {
     // let context = Context::new(device)?;
     // let _version = context.get_api_version()?;
 
-
     // Create cuBLAS handle
     let mut handle: cublasHandle_t = ptr::null_mut();
     unsafe { cublasCreate_v2(&mut handle) };
@@ -26,7 +25,7 @@ fn main() -> CudaResult<()> {
     // Define matrices A, B, and C
     let a: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0]; // Row-major (2x2)
     let b: Vec<f32> = vec![5.0, 6.0, 7.0, 8.0]; // Row-major (2x2)
-    let mut c: Vec<f32> = vec![0.0; 4];         // Result matrix (2x2)
+    let mut c: Vec<f32> = vec![0.0; 4]; // Result matrix (2x2)
 
     // Allocate device memory
     let d_a = DeviceBuffer::from_slice(&a)?;
@@ -43,12 +42,17 @@ fn main() -> CudaResult<()> {
             handle,
             cublas_sys::cublasOperation_t::CUBLAS_OP_N, // No transpose A
             cublas_sys::cublasOperation_t::CUBLAS_OP_N, // No transpose B
-            N, N, N,                                    // Matrix dimensions
-            &alpha, 
-            d_a.as_device_ptr().as_ptr(), N, 
-            d_b.as_device_ptr().as_ptr(), N, 
-            &beta, 
-            d_c.as_device_ptr().as_mut_ptr(), N,
+            N,
+            N,
+            N, // Matrix dimensions
+            &alpha,
+            d_a.as_device_ptr().as_ptr(),
+            N,
+            d_b.as_device_ptr().as_ptr(),
+            N,
+            &beta,
+            d_c.as_device_ptr().as_mut_ptr(),
+            N,
         );
     }
 
