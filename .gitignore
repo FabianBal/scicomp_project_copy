@@ -2,4 +2,5 @@ target
 .vscode
 .venv
 matrix_instances/generated/*
+matrix_instances/old_benchmarks/*
 output/*
